@@ -4,10 +4,11 @@ import { SceneManager } from './SceneManager';
 import { setupLighting } from './lighting';
 import { loadWuxingBuildings, disposeBuildings } from './WuxingBuildings';
 import { loadRoadNetwork, disposeRoads } from './RoadNetwork';
+import { loadWaterNetwork, disposeWater } from './WaterNetwork';
 import { createMapGround } from './MapGround';
 import { MapHUD } from './MapHUD';
 
-// ── HTML 骨架 ──────────────────────────────────────────────────────────────
+// ── HTML 骨架 ──────────────────────────────────────────────────────────────────
 const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) throw new Error('Missing #app');
 
@@ -19,29 +20,24 @@ app.innerHTML = `
   <section class="panel">
     <div class="eyebrow">LIUZHOU ONLINE</div>
     <h1>网上柳州</h1>
-    <p>五星街周边 500 m 范围，建筑与道路来自 OpenStreetMap。<br>
-       灰紫斜纹为缺失高度的建筑（统一 3 m 占位）。</p>
+    <p>五星街周边，建筑与道路来自 OpenStreetMap。<br>
+       灰紫斜纹为缺失高度的建筑（3 m 占位）。</p>
     <p class="hint">拖动旋转 · 滚轮缩放 · 右键平移 · <kbd>L</kbd> 图例 · <kbd>N</kbd> 朝北</p>
     <button id="reset-view" type="button">重置视角</button>
   </section>
   <div class="viewport" id="viewport"></div>
 `;
 
-// ── 场景初始化 ─────────────────────────────────────────────────────────────
+// ── 场景初始化 ─────────────────────────────────────────────────────────────────
 const viewport = document.querySelector<HTMLDivElement>('#viewport')!;
 const scene = new SceneManager({ container: viewport });
 
-// 光照
 setupLighting(scene.scene);
-
-// 地面 + 网格 + 边框
 const ground = createMapGround();
 scene.add(ground);
 
-// HUD + 指北针 + 图例 + 署名
 const hud = new MapHUD(document.body);
 
-// 重置视角
 document.querySelector<HTMLButtonElement>('#reset-view')!.addEventListener('click', () => {
   scene.controls.enableDamping = false;
   scene.controls.update();
@@ -49,7 +45,6 @@ document.querySelector<HTMLButtonElement>('#reset-view')!.addEventListener('clic
   scene.controls.enableDamping = true;
 });
 
-// 按 N 朝北
 document.addEventListener('keydown', e => {
   if (e.key === 'n' || e.key === 'N') {
     const dist = scene.camera.position.distanceTo(scene.controls.target);
@@ -62,53 +57,51 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ── 异步加载地图数据 ───────────────────────────────────────────────────────
+// ── 异步加载地图数据 ────────────────────────────────────────────────────────────
 let disposed = false;
 let buildingGroup: THREE.Group | null = null;
 let roadGroup:     THREE.Group | null = null;
-let buildingsTotal = 0;
-let buildingsMissing = 0;
-let roadsTotal = 0;
+let waterGroup:    THREE.Group | null = null;
+let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0;
 
 (async () => {
   try {
-    const [bGroup, rGroup] = await Promise.all([
+    const [buildResult, rGroup, wGroup] = await Promise.all([
       loadWuxingBuildings(),
       loadRoadNetwork(),
+      loadWaterNetwork(),
     ]);
     if (disposed) {
-      disposeBuildings(bGroup);
+      disposeBuildings(buildResult.group);
       disposeRoads(rGroup);
+      disposeWater(wGroup);
       return;
     }
-    buildingGroup = bGroup;
+
+    buildingGroup = buildResult.group;
     roadGroup     = rGroup;
+    waterGroup    = wGroup;
 
-    // 建筑投射阴影
-    bGroup.traverse(o => { if (o instanceof THREE.Mesh) o.castShadow = true; });
+    buildingGroup.traverse(o => { if (o instanceof THREE.Mesh) o.castShadow = true; });
+    scene.add(buildingGroup, roadGroup, waterGroup);
 
-    scene.add(bGroup, rGroup);
-
-    buildingsTotal   = bGroup.children.length;
-    buildingsMissing = buildingsTotal;   // 全部 missing（OSM 无高度数据）
+    buildingsTotal   = buildResult.stats.total;
+    buildingsMissing = buildResult.stats.missing;
     roadsTotal       = rGroup.children.length;
   } catch (err) {
     console.error('地图加载失败', err);
   }
 })();
 
-// ── 渲染循环 ──────────────────────────────────────────────────────────────
-let frames = 0;
-let lastFps = performance.now();
+// ── 渲染循环 ────────────────────────────────────────────────────────────────────
+let frames = 0, lastFps = performance.now();
 
 scene.startRendering(() => {
   frames++;
   const now = performance.now();
   if (now - lastFps >= 1000) {
     const fps = Math.round(frames * 1000 / (now - lastFps));
-    frames = 0;
-    lastFps = now;
-
+    frames = 0; lastFps = now;
     const info = scene.renderer.info;
     hud.update({
       fps,
@@ -122,13 +115,14 @@ scene.startRendering(() => {
   }
 });
 
-// ── HMR 清理 ──────────────────────────────────────────────────────────────
+// ── HMR 清理 ────────────────────────────────────────────────────────────────────
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     disposed = true;
     scene.stopRendering();
     if (buildingGroup) disposeBuildings(buildingGroup);
     if (roadGroup)     disposeRoads(roadGroup);
+    if (waterGroup)    disposeWater(waterGroup);
     hud.dispose();
     scene.dispose();
   });

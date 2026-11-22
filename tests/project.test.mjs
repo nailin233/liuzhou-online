@@ -40,6 +40,39 @@ test('roads.json exists and has OSM attribution', () => {
   assert.ok(Array.isArray(roads.roads) && roads.roads.length > 0, 'must have road entries');
 });
 
+test('manifest-wide has 240 buildings with OSM attribution', () => {
+  const widePath = new URL('../public/models/wuxing-street/manifest-wide.json', import.meta.url);
+  assert.ok(existsSync(widePath), 'manifest-wide.json must exist');
+  const wide = JSON.parse(readFileSync(widePath, 'utf8'));
+  assert.ok(wide.attribution?.includes('OpenStreetMap'), 'wide manifest must have OSM attribution');
+  assert.ok(wide.license?.includes('ODbL'), 'wide manifest must have ODbL license');
+  assert.ok(Array.isArray(wide.buildings) && wide.buildings.length === 240,
+    `expected 240 buildings in wide manifest, got ${wide.buildings?.length}`);
+  // 验证高度数据存在
+  const withHeight = wide.buildings.filter(b => b.heightSource === 'osm.height');
+  const withLevels = wide.buildings.filter(b => b.heightSource === 'osm.levels');
+  assert.ok(withHeight.length >= 2, `expected >=2 buildings with osm.height, got ${withHeight.length}`);
+  assert.ok(withLevels.length >= 1, `expected >=1 buildings with osm.levels, got ${withLevels.length}`);
+});
+
+test('waterways.json has Liujiang river data', () => {
+  const waterPath = new URL('../public/models/wuxing-street/waterways.json', import.meta.url);
+  assert.ok(existsSync(waterPath), 'waterways.json must exist');
+  const water = JSON.parse(readFileSync(waterPath, 'utf8'));
+  assert.ok(water.attribution?.includes('OpenStreetMap'), 'waterways.json must have OSM attribution');
+  assert.ok(Array.isArray(water.waterways) && water.waterways.length > 0, 'must have waterway entries');
+  const liujiang = water.waterways.filter(w => w.name?.includes('柳江'));
+  assert.ok(liujiang.length > 0, 'must include Liujiang river data');
+});
+
+test('wide roads.json has more than 100 roads', () => {
+  const roads = JSON.parse(
+    readFileSync(new URL('../public/models/wuxing-street/roads.json', import.meta.url), 'utf8')
+  );
+  assert.ok(roads.roads.length > 100,
+    `wide roads should have >100 entries, got ${roads.roads.length}`);
+});
+
 test('collaboration governance exists', () => {
   for (const name of ['AGENTS.md', 'CLAUDE.md', 'docs/requirements.md', 'scripts/dispatcher.mjs']) {
     assert.ok(existsSync(new URL(`../${name}`, import.meta.url)), name);
