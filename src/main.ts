@@ -17,6 +17,7 @@ app.innerHTML = `
     <h1>网上柳州</h1>
     <p>三维引擎已初始化。当前是工程校验场景，<strong>不是柳州真实地图</strong>。</p>
     <p class="hint">拖动旋转视角 · 滚轮缩放 · 鼠标右键平移</p>
+    <button id="reset-view" type="button">重置视角</button>
   </section>
   <div class="status" id="status">正在初始化…</div>
   <div class="viewport" id="viewport"></div>
@@ -24,6 +25,7 @@ app.innerHTML = `
 
 const viewport = document.querySelector<HTMLDivElement>('#viewport')!;
 const statusElement = document.querySelector<HTMLElement>('#status')!;
+const resetButton = document.querySelector<HTMLButtonElement>('#reset-view')!;
 
 // 初始化场景管理器
 const sceneManager = new SceneManager({
@@ -33,6 +35,18 @@ const sceneManager = new SceneManager({
   fogColor: 0x101820,
   fogNear: 45,
   fogFar: 115,
+});
+
+// 保存初始相机状态（用于重置）
+sceneManager.controls.saveState();
+
+// 重置视角按钮
+resetButton.addEventListener('click', () => {
+  // 消耗剩余的拖动惯性，然后恢复保存的姿态
+  sceneManager.controls.enableDamping = false;
+  sceneManager.controls.update();
+  sceneManager.controls.reset();
+  sceneManager.controls.enableDamping = true;
 });
 
 // 设置光照
@@ -54,7 +68,7 @@ let frames = 0;
 let lastFpsUpdate = performance.now();
 
 // 开始渲染循环
-sceneManager.startRendering((_delta, elapsed) => {
+sceneManager.startRendering((_delta, _elapsed) => {
   frames++;
   
   const now = performance.now();
