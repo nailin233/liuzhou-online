@@ -1,7 +1,11 @@
 import './style.css';
+import { disposeBuildings, loadWuxingBuildings } from './WuxingBuildings';
+import type { Group } from 'three';
 import { SceneManager } from './SceneManager';
 import { setupLighting } from './lighting';
 import { DemoScene } from './DemoScene';
+
+const showBuildings = new URLSearchParams(location.search).get('view') === 'buildings';
 
 // 初始化 HTML 结构
 const app = document.querySelector<HTMLDivElement>('#app');
@@ -15,11 +19,14 @@ app.innerHTML = `
   <section class="panel">
     <div class="eyebrow">LIUZHOU ONLINE</div>
     <h1>网上柳州</h1>
-    <p>三维引擎已初始化。当前是工程校验场景，<strong>不是柳州真实地图</strong>。</p>
+    ${showBuildings
+      ? '<p>五星街建筑轮廓来自 OpenStreetMap。灰紫色斜纹表示高度缺失，模型统一高 3 米。</p>'
+      : '<p>三维引擎已初始化。当前是工程校验场景，<strong>不是柳州真实地图</strong>。</p>'}
     <p class="hint">拖动旋转视角 · 滚轮缩放 · 鼠标右键平移</p>
     <button id="reset-view" type="button">重置视角</button>
   </section>
   <div class="status" id="status">正在初始化…</div>
+  ${showBuildings ? '<a class="attribution" href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors · ODbL 1.0</a>' : ''}
   <div class="viewport" id="viewport"></div>
 `;
 
@@ -31,11 +38,19 @@ const resetButton = document.querySelector<HTMLButtonElement>('#reset-view')!;
 const sceneManager = new SceneManager({
   container: viewport,
   backgroundColor: 0x101820,
-  enableFog: true,
+  enableFog: !showBuildings,
   fogColor: 0x101820,
   fogNear: 45,
   fogFar: 115,
 });
+
+if (showBuildings) {
+  sceneManager.camera.far = 3000;
+  const aspect = Math.min(1, sceneManager.camera.aspect);
+  sceneManager.camera.position.set(0, 460 / aspect, 540 / aspect);
+  sceneManager.camera.updateProjectionMatrix();
+  sceneManager.controls.update();
+}
 
 // 保存初始相机状态（用于重置）
 sceneManager.controls.saveState();
@@ -52,16 +67,29 @@ resetButton.addEventListener('click', () => {
 // 设置光照
 setupLighting(sceneManager.scene);
 
-// 创建演示场景
-const demoScene = new DemoScene({
-  buildingColor: 0x3e8f91,
-  buildingRoughness: 0.75,
-  floorColor: 0x17232c,
-  floorRoughness: 0.9,
-});
-
-const demoObjects = demoScene.create();
-sceneManager.add(...demoObjects);
+let buildings: Group | undefined;
+let demoScene: DemoScene | undefined;
+let disposed = false;
+let status = '测试白模';
+if (showBuildings) {
+  status = '正在加载五星街建筑…';
+  loadWuxingBuildings().then(group => {
+    if (disposed) {
+      disposeBuildings(group);
+      return;
+    }
+    buildings = group;
+    sceneManager.add(group);
+    status = `高度缺失 ${group.children.length} / ${group.children.length} 栋 · 3 m 占位`;
+    statusElement.textContent = status;
+  }).catch(error => {
+    status = `建筑加载失败 · ${error.message}`;
+    if (!disposed) statusElement.textContent = status;
+  });
+} else {
+  demoScene = new DemoScene();
+  sceneManager.add(...demoScene.create());
+}
 
 // FPS 计数器
 let frames = 0;
@@ -74,7 +102,7 @@ sceneManager.startRendering((_delta, _elapsed) => {
   const now = performance.now();
   if (now - lastFpsUpdate >= 1000) {
     const fps = Math.round(frames * 1000 / (now - lastFpsUpdate));
-    statusElement.textContent = `WebGL 正常 · ${fps} FPS · 测试白模`;
+    statusElement.textContent = `WebGL 正常 · ${fps} FPS · ${status}`;
     frames = 0;
     lastFpsUpdate = now;
   }
@@ -84,7 +112,9 @@ sceneManager.startRendering((_delta, _elapsed) => {
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     sceneManager.stopRendering();
-    demoScene.dispose();
+    disposed = true;
+    demoScene?.dispose();
+    if (buildings) disposeBuildings(buildings);
     sceneManager.dispose();
   });
 }
