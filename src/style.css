@@ -1,6 +1,9 @@
 :root { font-family: 'Segoe UI', 'Microsoft YaHei UI', sans-serif; color: #edf4f5; background:#101820; font-synthesis:none; }
 * { box-sizing:border-box } body { margin:0; min-height:100vh }
 .viewport { width:100vw; height:100vh; overflow:hidden }
+.viewport canvas { display:block; width:100%; height:100% }
+#reset-view { pointer-events:auto; padding:8px 14px; border:1px solid #86b9b8; border-radius:4px; background:#17232c; color:#edf4f5; font:inherit; cursor:pointer }
+#reset-view:focus-visible { outline:3px solid #8ad2c8; outline-offset:3px }
 .header { position:fixed; z-index:5; top:0; left:0; right:0; height:72px; padding:0 38px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #ffffff16; pointer-events:none }
 .mark { font-size:18px; letter-spacing:.16em; font-weight:800 }.dot { color:#8ad2c8 }.version { color:#8ba4b1; font-size:11px; letter-spacing:.2em }
 .panel { position:fixed; z-index:5; top:110px; left:38px; max-width:320px; pointer-events:none }.eyebrow { color:#86b9b8; font-size:11px; letter-spacing:.26em; font-weight:700 }h1 { margin:14px 0; font-size:46px; line-height:1.2; font-weight:600; letter-spacing:.07em }.panel p { color:#afc4cb; line-height:1.8; font-size:13px }.panel strong { color:#e2efef }.hint { margin-top:28px; color:#7795a0!important }
