@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blender 测试模型查看器 - Issue #16</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei UI', sans-serif;
+            background: #101820;
+            color: #EDF4F5;
+            overflow: hidden;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(16, 24, 32, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #3E8F91;
+            max-width: 400px;
+            backdrop-filter: blur(6px);
+        }
+        
+        #info h2 {
+            color: #8AD2C8;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        
+        #info p {
+            margin: 8px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .spec {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #FFFFFF16;
+        }
+        
+        .spec:last-child {
+            border-bottom: none;
+        }
+        
+        .label {
+            color: #AFC4CB;
+        }
+        
+        .value {
+            color: #EDF4F5;
+            font-weight: 500;
+        }
+        
+        .status {
+            margin-top: 12px;
+            padding: 8px;
+            background: #1B2830;
+            border-radius: 4px;
+            border-left: 3px solid #8AD2C8;
+        }
+        
+        .error {
+            border-left-color: #D9549B;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(16, 24, 32, 0.9);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #3E8F91;
+            backdrop-filter: blur(6px);
+        }
+        
+        button {
+            background: #3E8F91;
+            color: #EDF4F5;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-right: 8px;
+        }
+        
+        button:hover {
+            background: #4A9FA1;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        
+        <div id="info">
+            <h2>Blender 测试模型查看器</h2>
+            <p style="color: #AFC4CB; margin-bottom: 16px;">Issue #16: 验证 Blender MCP 环境</p>
+            
+            <div class="spec">
+                <span class="label">模型文件:</span>
+                <span class="value" id="model-file">加载中...</span>
+            </div>
+            <div class="spec">
+                <span class="label">三角形数:</span>
+                <span class="value" id="triangle-count">-</span>
+            </div>
+            <div class="spec">
+                <span class="label">文件大小:</span>
+                <span class="value" id="file-size">-</span>
+            </div>
+            <div class="spec">
+                <span class="label">材质数:</span>
+                <span class="value" id="material-count">-</span>
+            </div>
+            
+            <div class="status" id="status">
+                ⏳ 正在加载模型...
+            </div>
+        </div>
+        
+        <div id="controls">
+            <button onclick="resetCamera()">重置视角</button>
+            <button onclick="toggleWireframe()">线框模式</button>
+        </div>
+    </div>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        
+        // 场景设置
+        const canvas = document.getElementById('canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x101820);
+        scene.fog = new THREE.Fog(0x101820, 45, 115);
+        
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 250);
+        camera.position.set(20, 15, 20);
+        
+        const controls = new OrbitControls(camera, canvas);
+        controls.target.set(0, 7.5, 0); // 建筑中心高度
+        controls.enableDamping = true;
+        controls.update();
+        controls.saveState();
+        
+        // 光照 (按美术规范)
+        const hemisphereLight = new THREE.HemisphereLight(0xBCD2E0, 0x293744, 1.6);
+        scene.add(hemisphereLight);
+        
+        const sunLight = new THREE.DirectionalLight(0xFFE0B5, 2.4);
+        sunLight.position.set(-182, 306, 182); // 方位角 225°，高度角 50°
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.left = -300;
+        sunLight.shadow.camera.right = 300;
+        sunLight.shadow.camera.top = 300;
+        sunLight.shadow.camera.bottom = -300;
+        sunLight.shadow.bias = -0.0005;
+        sunLight.shadow.normalBias = 0.5;
+        scene.add(sunLight);
+        
+        // 地面
+        const floorGeometry = new THREE.PlaneGeometry(100, 100);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x17232C,
+            roughness: 0.9
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        
+        // 网格辅助线
+        const grid = new THREE.GridHelper(100, 50, 0x284454, 0x203340);
+        grid.position.y = 0.01;
+        scene.add(grid);
+        
+        // 加载测试模型
+        const loader = new GLTFLoader();
+        let testModel = null;
+        let wireframeMode = false;
+        
+        const statusDiv = document.getElementById('status');
+        const modelFileSpan = document.getElementById('model-file');
+        const triangleCountSpan = document.getElementById('triangle-count');
+        const fileSizeSpan = document.getElementById('file-size');
+        const materialCountSpan = document.getElementById('material-count');
+        
+        function updateStatus(message, isError = false) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status' + (isError ? ' error' : '');
+        }
+        
+        loader.load(
+            '/tests/blender-test-model.glb',
+            (gltf) => {
+                testModel = gltf.scene;
+                testModel.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                scene.add(testModel);
+                
+                // 统计信息
+                let triangleCount = 0;
+                let materialCount = 0;
+                const materials = new Set();
+                
+                testModel.traverse((child) => {
+                    if (child.isMesh) {
+                        const geometry = child.geometry;
+                        if (geometry.index) {
+                            triangleCount += geometry.index.count / 3;
+                        } else {
+                            triangleCount += geometry.attributes.position.count / 3;
+                        }
+                        
+                        if (child.material) {
+                            if (Array.isArray(child.material)) {
+                                child.material.forEach(m => materials.add(m));
+                            } else {
+                                materials.add(child.material);
+                            }
+                        }
+                    }
+                });
+                
+                materialCount = materials.size;
+                
+                // 更新信息显示
+                modelFileSpan.textContent = 'blender-test-model.glb';
+                triangleCountSpan.textContent = Math.round(triangleCount);
+                materialCountSpan.textContent = materialCount;
+                
+                // 验证规格
+                const isValid = triangleCount < 500;
+                updateStatus(
+                    isValid 
+                        ? `✅ 模型加载成功！三角形数符合规范 (< 500)` 
+                        : `⚠️  模型已加载，但三角形数超出规范 (${Math.round(triangleCount)} > 500)`,
+                    !isValid
+                );
+                
+                // 获取文件大小 (通过 fetch)
+                fetch('/tests/blender-test-model.glb')
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const sizeKB = (blob.size / 1024).toFixed(2);
+                        fileSizeSpan.textContent = `${sizeKB} KB`;
+                    });
+            },
+            (progress) => {
+                const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                updateStatus(`⏳ 加载中... ${percent}%`);
+            },
+            (error) => {
+                console.error('模型加载失败:', error);
+                updateStatus(`❌ 模型加载失败: ${error.message}`, true);
+                modelFileSpan.textContent = '加载失败';
+            }
+        );
+        
+        // 控制函数
+        window.resetCamera = () => {
+            controls.reset();
+        };
+        
+        window.toggleWireframe = () => {
+            wireframeMode = !wireframeMode;
+            if (testModel) {
+                testModel.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(m => m.wireframe = wireframeMode);
+                        } else {
+                            child.material.wireframe = wireframeMode;
+                        }
+                    }
+                });
+            }
+        };
+        
+        // 渲染循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        animate();
+    </script>
+</body>
+</html>
