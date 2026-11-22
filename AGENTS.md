@@ -16,3 +16,11 @@
 6. 不能把随机建筑、虚构地标、伪造测试当作真实结果。
 7. 各 Agent 完成后只提交工作结果；提交、Push 和 PR 由调度器完成。
 8. 变更以最小、可验证、可复现为原则。
+
+## Capacity-aware routing (2026-11)
+- DeepSeek Harness (dsh) handles routine implementations and tests.
+- Claude handles architecture and document-only review, with per-run API budget ceiling.
+- Grok handles research and citations.
+- Codex is specialist-only, disabled in scheduler by default.
+- When codex quota is exhausted, label routine implementation issues `agent:dsh`. Never loop paid API calls after failures.
+- Merge is always human-only. DeepSeek and Claude API use may incur charges; set limits with the provider as well.
