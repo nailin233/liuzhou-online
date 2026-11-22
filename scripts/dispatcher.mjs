@@ -31,7 +31,7 @@ function log(message) { console.log(`[${new Date().toISOString()}] ${message}`);
 async function invoke(command, args, { cwd = root, timeoutMs = 120000, quiet = false } = {}) {
   return new Promise((finish, reject) => {
     let stdout = '', stderr = '', timedOut = false;
-    const proc = spawn(command, args, { cwd, windowsHide: true, env: process.env, shell: false });
+    const proc = spawn(command, args, { cwd, windowsHide: true, env: process.env, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
     let timer;
     if (timeoutMs > 0) timer = setTimeout(() => {
       timedOut = true;
