@@ -8,3 +8,12 @@ dist/
 .DS_Store
 .vscode/
 .idea/
+
+# 爬取数据 — 仅本地，不提交（服务条款限制）
+data/scrape/
+
+# Overture 原始 GeoJSON（大文件，manifest-overture.json 是处理后版本）
+data/overture/
+
+# Geofabrik PBF（53MB，可重新下载）
+data/*.pbf

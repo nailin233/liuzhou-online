@@ -62,7 +62,7 @@ let disposed = false;
 let buildingGroup: THREE.Group | null = null;
 let roadGroup:     THREE.Group | null = null;
 let waterGroup:    THREE.Group | null = null;
-let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0;
+let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0, _dataSource = '';
 
 (async () => {
   try {
@@ -88,6 +88,8 @@ let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0;
     buildingsTotal   = buildResult.stats.total;
     buildingsMissing = buildResult.stats.missing;
     roadsTotal       = rGroup.children.length;
+    // 记录数据源（供 HUD 显示）
+    _dataSource = buildResult.stats.source;
   } catch (err) {
     console.error('地图加载失败', err);
   }
@@ -110,6 +112,7 @@ scene.startRendering(() => {
       buildingsTotal,
       buildingsMissing,
       roadsTotal,
+      dataSource:       _dataSource,
     });
     hud.updateCompass(scene.camera, scene.controls);
   }

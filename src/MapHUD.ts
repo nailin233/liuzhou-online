@@ -11,6 +11,7 @@ export interface HUDState {
   buildingsTotal: number;
   buildingsMissing: number;
   roadsTotal: number;
+  dataSource?: string;  // 数据来源标签（如 'Overture 2891'）
 }
 
 export class MapHUD {
@@ -129,10 +130,11 @@ export class MapHUD {
     const missing = state.buildingsMissing > 0
       ? `<span style="color:#D9549B">缺失高度 ${state.buildingsMissing}/${state.buildingsTotal}</span>`
       : `建筑 ${state.buildingsTotal}`;
+    const src = state.dataSource ? `<span style="color:#7795a0;font-size:10px"> ${state.dataSource}</span>` : '';
     this.statusEl.innerHTML =
       `WebGL · ${state.fps} FPS · 调用 ${state.drawCalls} · ` +
       `三角形 ${(state.triangles / 1000).toFixed(0)}k · ` +
-      `${missing} · 道路 ${state.roadsTotal} · <kbd style="opacity:.6">L</kbd>图例`;
+      `${missing} · 道路 ${state.roadsTotal}${src} · <kbd style="opacity:.6">L</kbd>图例`;
   }
 
   public dispose(): void {
