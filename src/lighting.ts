@@ -1,47 +1,26 @@
 /**
- * Lighting Setup - 光照系统配置
- * 
- * 提供场景的基础光照配置
+ * lighting — 按 art-direction.md §3.2「午后」默认光照
  */
-
 import * as THREE from 'three';
 
-export interface LightingOptions {
-  /** 天空颜色 */
-  skyColor?: number;
-  /** 地面颜色 */
-  groundColor?: number;
-  /** 环境光强度 */
-  ambientIntensity?: number;
-  /** 太阳光颜色 */
-  sunColor?: number;
-  /** 太阳光强度 */
-  sunIntensity?: number;
-  /** 太阳光位置 */
-  sunPosition?: [number, number, number];
-}
+export function setupLighting(scene: THREE.Scene): void {
+  // 半球光：天空 #BCD2E0，地面 #293744，强度 1.6
+  const hemi = new THREE.HemisphereLight(0xBCD2E0, 0x293744, 1.6);
+  scene.add(hemi);
 
-export function setupLighting(scene: THREE.Scene, options: LightingOptions = {}): THREE.Object3D[] {
-  const lights: THREE.Object3D[] = [];
-
-  // 环境光 (天空光 + 地面光)
-  const hemisphereLight = new THREE.HemisphereLight(
-    options.skyColor ?? 0xbcd2e0,
-    options.groundColor ?? 0x293744,
-    options.ambientIntensity ?? 2.2
-  );
-  scene.add(hemisphereLight);
-  lights.push(hemisphereLight);
-
-  // 太阳光 (平行光)
-  const sunLight = new THREE.DirectionalLight(
-    options.sunColor ?? 0xffe0b5,
-    options.sunIntensity ?? 2.1
-  );
-  const [x, y, z] = options.sunPosition ?? [-10, 25, 8];
-  sunLight.position.set(x, y, z);
-  scene.add(sunLight);
-  lights.push(sunLight);
-
-  return lights;
+  // 平行光（太阳）：方位角 225°（西南），高度角 50°
+  // 位置 ≈ (−182, 306, 182)，光从该方向射向原点
+  const sun = new THREE.DirectionalLight(0xFFE0B5, 2.4);
+  sun.position.set(-182, 306, 182);
+  sun.castShadow = true;
+  sun.shadow.mapSize.width  = 2048;
+  sun.shadow.mapSize.height = 2048;
+  const sc = sun.shadow.camera as THREE.OrthographicCamera;
+  sc.left = sc.bottom = -300;
+  sc.right = sc.top = 300;
+  sc.near = 10;
+  sc.far  = 1000;
+  sun.shadow.bias       = -0.0005;
+  sun.shadow.normalBias = 0.5;
+  scene.add(sun);
 }
