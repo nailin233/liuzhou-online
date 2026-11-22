@@ -1,13 +1,7 @@
 /**
- * Scene Manager - 管理 Three.js 场景的核心类
- * 
- * 职责:
- * - 初始化渲染器、场景、相机
- * - 管理窗口大小调整
- * - 提供渲染循环
- * - 提供场景对象添加/移除接口
+ * SceneManager — Three.js 场景/渲染器/相机统一管理
+ * 升级：ACESFilmic toneMapping + 阴影开启
  */
-
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -33,94 +27,69 @@ export class SceneManager {
   constructor(options: SceneManagerOptions) {
     this.container = options.container;
 
-    // 初始化渲染器
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // art-direction.md §3.2
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.0;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.container.appendChild(this.renderer.domElement);
 
-    // 初始化场景
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(options.backgroundColor ?? 0x101820);
 
     if (options.enableFog !== false) {
-      const fogColor = options.fogColor ?? options.backgroundColor ?? 0x101820;
-      const fogNear = options.fogNear ?? 45;
-      const fogFar = options.fogFar ?? 115;
-      this.scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
+      this.scene.fog = new THREE.Fog(
+        options.fogColor ?? options.backgroundColor ?? 0x101820,
+        options.fogNear ?? 600,
+        options.fogFar ?? 1400,
+      );
     }
 
-    // 初始化相机
     this.camera = new THREE.PerspectiveCamera(
-      55, // FOV
+      55,
       this.container.clientWidth / Math.max(1, this.container.clientHeight),
-      0.1, // near
-      250 // far
+      0.1,
+      3000,
     );
-    this.camera.position.set(18, 20, 23);
+    this.camera.position.set(0, 400, 450);
 
-    // 初始化控制器
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.target.set(0, 1, 0);
+    this.controls.target.set(0, 0, 0);
     this.controls.enableDamping = true;
     this.controls.update();
 
-    // 设置窗口大小监听
     this.resizeObserver = new ResizeObserver(() => this.handleResize());
     this.resizeObserver.observe(this.container);
   }
 
   private handleResize(): void {
-    const width = this.container.clientWidth;
-    const height = this.container.clientHeight;
-    
-    this.renderer.setSize(width, height, false);
-    this.camera.aspect = width / Math.max(1, height);
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    this.renderer.setSize(w, h, false);
+    this.camera.aspect = w / Math.max(1, h);
     this.camera.updateProjectionMatrix();
   }
 
-  /**
-   * 添加对象到场景
-   */
-  public add(...objects: THREE.Object3D[]): void {
-    this.scene.add(...objects);
-  }
+  public add(...objects: THREE.Object3D[]): void { this.scene.add(...objects); }
+  public remove(...objects: THREE.Object3D[]): void { this.scene.remove(...objects); }
 
-  /**
-   * 从场景移除对象
-   */
-  public remove(...objects: THREE.Object3D[]): void {
-    this.scene.remove(...objects);
-  }
-
-  /**
-   * 开始渲染循环
-   */
   public startRendering(onUpdate?: (delta: number, elapsed: number) => void): void {
-    let lastTime = performance.now();
-
+    let last = performance.now();
     const animate = (now: number) => {
       this.animationId = requestAnimationFrame(animate);
-
-      const delta = (now - lastTime) / 1000; // 秒
-      lastTime = now;
-
+      const delta = (now - last) / 1000;
+      last = now;
       this.controls.update();
-      
-      if (onUpdate) {
-        onUpdate(delta, now / 1000);
-      }
-
+      if (onUpdate) onUpdate(delta, now / 1000);
       this.renderer.render(this.scene, this.camera);
     };
-
     animate(performance.now());
   }
 
-  /**
-   * 停止渲染循环
-   */
   public stopRendering(): void {
     if (this.animationId !== null) {
       cancelAnimationFrame(this.animationId);
@@ -128,9 +97,6 @@ export class SceneManager {
     }
   }
 
-  /**
-   * 清理资源
-   */
   public dispose(): void {
     this.stopRendering();
     this.resizeObserver.disconnect();
