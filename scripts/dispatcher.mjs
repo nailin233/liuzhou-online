@@ -129,7 +129,15 @@ async function publishDraft(repo, issue, agent, dir, branch, commit) {
     '--title', `[${agent}] ${issue.title}`, '--body', `Closes #${issue.number}\n\nAgent: ${agent}\n\n请检查变更和验证结果后人工审批合并。`);
 }
 async function changeState(id, repo, previous, next) {
-  await gh('issue', 'edit', String(id), '--repo', repo, '--remove-label', `state:${previous}`, '--add-label', `state:${next}`);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await gh('issue', 'edit', String(id), '--repo', repo, '--remove-label', `state:${previous}`, '--add-label', `state:${next}`);
+      return;
+    } catch (error) {
+      if (attempt >= 3 || !/\bEOF\b|connection reset|timed out|HTTP 50[234]/i.test(error.message)) throw error;
+      await delay(1000 * attempt);
+    }
+  }
 }
 async function addComment(id, repo, text) {
   try { await gh('issue', 'comment', String(id), '--repo', repo, '--body', text); }
