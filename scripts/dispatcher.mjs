@@ -31,7 +31,7 @@ function log(message) { console.log(`[${new Date().toISOString()}] ${message}`);
 async function invoke(command, args, { cwd = root, timeoutMs = 120000, quiet = false } = {}) {
   return new Promise((finish, reject) => {
     let stdout = '', stderr = '', timedOut = false;
-    const proc = spawn(command, args, { cwd, windowsHide: true, env: process.env, shell: false });
+    const proc = spawn(command, args, { cwd, windowsHide: true, env: process.env, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
     let timer;
     if (timeoutMs > 0) timer = setTimeout(() => {
       timedOut = true;
@@ -129,7 +129,15 @@ async function publishDraft(repo, issue, agent, dir, branch, commit) {
     '--title', `[${agent}] ${issue.title}`, '--body', `Closes #${issue.number}\n\nAgent: ${agent}\n\n请检查变更和验证结果后人工审批合并。`);
 }
 async function changeState(id, repo, previous, next) {
-  await gh('issue', 'edit', String(id), '--repo', repo, '--remove-label', `state:${previous}`, '--add-label', `state:${next}`);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await gh('issue', 'edit', String(id), '--repo', repo, '--remove-label', `state:${previous}`, '--add-label', `state:${next}`);
+      return;
+    } catch (error) {
+      if (attempt >= 3 || !/\bEOF\b|connection reset|timed out|HTTP 50[234]/i.test(error.message)) throw error;
+      await delay(1000 * attempt);
+    }
+  }
 }
 async function addComment(id, repo, text) {
   try { await gh('issue', 'comment', String(id), '--repo', repo, '--body', text); }

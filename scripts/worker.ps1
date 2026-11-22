@@ -9,6 +9,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+$OutputEncoding = [Console]::OutputEncoding
 Set-Location -LiteralPath $Worktree
 $promptText = Get-Content -LiteralPath $PromptFile -Raw -Encoding UTF8
 $env:CI = '1'
