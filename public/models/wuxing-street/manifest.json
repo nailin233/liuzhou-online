@@ -1,0 +1,754 @@
+{
+  "source": "https://www.openstreetmap.org/api/0.6/map?bbox=109.4062238,24.3135183,109.4111526,24.3180329",
+  "snapshotHttpDate": "2026-11-22T11:08:46Z",
+  "snapshotSha256": "36859fd8619e1b1413399c2c51c05b66fd69fa4254efeddc38182c563f9d33c2",
+  "attribution": "© OpenStreetMap contributors",
+  "copyrightUrl": "https://www.openstreetmap.org/copyright",
+  "license": "ODbL 1.0",
+  "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "crs": "EPSG:4326",
+  "bbox": [
+    109.4062238,
+    24.3135183,
+    109.4111526,
+    24.3180329
+  ],
+  "origin": {
+    "lon": 109.4086882,
+    "lat": 24.3157756,
+    "node": "6038500119"
+  },
+  "units": "m",
+  "axes": [
+    "east",
+    "up",
+    "south"
+  ],
+  "buildings": [
+    {
+      "id": "way/205654183",
+      "version": 4,
+      "tags": {
+        "addr:city": "liuzhou",
+        "addr:district": "Cheng Zhong",
+        "addr:housenumber": "97",
+        "addr:province": "Guangxi",
+        "addr:street": "解放南路",
+        "building": "commercial",
+        "name": "华侨大厦",
+        "name:en": "The Chinese Building"
+      },
+      "position": [
+        -125.09266930023585,
+        0,
+        -68.73511693167772
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205654183.glb",
+      "triangles": 32,
+      "sha256": "ee8ba46552bffe098ca2fb701727ba85a4b3ac322c29211b4ce5f614ca6bb152"
+    },
+    {
+      "id": "way/205654194",
+      "version": 3,
+      "tags": {
+        "addr:city": "liuzhou",
+        "addr:district": "Cheng Zhong",
+        "addr:housenumber": "79",
+        "addr:province": "Guangxi",
+        "addr:street": "公园路",
+        "building": "commercial",
+        "name": "聚宝大厦",
+        "name:en": "Ju Bao Building"
+      },
+      "position": [
+        -177.4322808349835,
+        0,
+        -61.529041259609414
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205654194.glb",
+      "triangles": 20,
+      "sha256": "c1cf4d92a8ad87d1741a93ac9aad30c27595f508bb255376173715c05a9dff15"
+    },
+    {
+      "id": "way/205654195",
+      "version": 4,
+      "tags": {
+        "building": "yes",
+        "name": "东都大厦",
+        "name:en": "Dong Du shopping mall",
+        "shop": "mall"
+      },
+      "position": [
+        -31.54594683788677,
+        0,
+        92.23668321106916
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205654195.glb",
+      "triangles": 44,
+      "sha256": "59799bb3f2aa05f4cd24797607ace30ce0c263d27241d4e4373383ca22932944"
+    },
+    {
+      "id": "way/205654205",
+      "version": 5,
+      "tags": {
+        "addr:city": "liuzhou",
+        "addr:district": "Cheng Zhong",
+        "addr:housenumber": "2",
+        "addr:province": "Guangxi",
+        "addr:street": "龙城路",
+        "building": "commercial",
+        "name": "工贸大厦",
+        "name:en": "Liuzhou Shopping centre",
+        "shop": "mall"
+      },
+      "position": [
+        -161.9270066018049,
+        0,
+        102.11608145329811
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205654205.glb",
+      "triangles": 68,
+      "sha256": "d9aac27128a6f16c0dcd9fb7383808258a886334967b9b22b369e913884dfe0f"
+    },
+    {
+      "id": "way/205656857",
+      "version": 3,
+      "tags": {
+        "building": "commercial",
+        "name": "兴隆大厦",
+        "name:en": "Xing Long Building"
+      },
+      "position": [
+        -95.98291136825473,
+        0,
+        123.53324525191297
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205656857.glb",
+      "triangles": 20,
+      "sha256": "0f16492bc395e0d21bc6536934f36fe7b8d226a9d2cacacdc46c35a355dc5e41"
+    },
+    {
+      "id": "way/205656859",
+      "version": 4,
+      "tags": {
+        "addr:city": "liuzhou",
+        "addr:district": "Cheng Zhong",
+        "addr:housenumber": "72",
+        "addr:province": "Guangxi",
+        "addr:street": "公园路",
+        "building": "commercial",
+        "name": "星河大厦",
+        "name:en": "The gallaxy commercial building"
+      },
+      "position": [
+        -150.04339384904617,
+        0,
+        -150.76925415079927
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205656859.glb",
+      "triangles": 68,
+      "sha256": "6398075a7b32bd330e0da0eb28ebba675c9166afa53347cfe478d528818bc951"
+    },
+    {
+      "id": "way/205657491",
+      "version": 4,
+      "tags": {
+        "addr:city": "liuzhou",
+        "addr:district": "Cheng Zhong",
+        "addr:housenumber": "28",
+        "addr:province": "Guangxi",
+        "addr:street": "龙城路",
+        "building": "commercial",
+        "name": "工行大厦",
+        "name:en": "The ICBC headquater"
+      },
+      "position": [
+        -178.93004820072278,
+        0,
+        -215.1027432980332
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205657491.glb",
+      "triangles": 32,
+      "sha256": "63ce05cd5ad1915a0ffea194ec296a36535a84e56b5bbb599ea8b8e50ab5bdc1"
+    },
+    {
+      "id": "way/205657492",
+      "version": 2,
+      "tags": {
+        "building": "yes",
+        "name": "金惠商厦",
+        "name:en": "Jin Hui Buildinng"
+      },
+      "position": [
+        -25.084423068102296,
+        0,
+        -237.18453333177234
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205657492.glb",
+      "triangles": 20,
+      "sha256": "23d8b493cd9b6ec6adc3390ae85e260ae9c82a03ecb437595e08e45e87bdd5b4"
+    },
+    {
+      "id": "way/205657497",
+      "version": 4,
+      "tags": {
+        "addr:city": "liuzhou",
+        "addr:district": "Cheng Zhong",
+        "addr:housenumber": "32",
+        "addr:province": "Guangxi",
+        "addr:street": "龙城路",
+        "building": "yes",
+        "internet_access": "yes",
+        "name": "金皇冠柏曼酒店",
+        "name:en": "Li Jing Grand Hotel",
+        "smoking": "no",
+        "stars": "4",
+        "tourism": "hotel"
+      },
+      "position": [
+        -148.96752291510964,
+        0,
+        -276.46445313977927
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205657497.glb",
+      "triangles": 98,
+      "sha256": "43ede1779b2552afa6ef58367ec11b2b29a9978dea8ef6e133e8da7692882e96"
+    },
+    {
+      "id": "way/205657498",
+      "version": 3,
+      "tags": {
+        "building": "yes",
+        "name": "金运来大厦",
+        "name:en": "Jin Yun Lai Building"
+      },
+      "position": [
+        -56.85128288817698,
+        0,
+        -138.39963564237604
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205657498.glb",
+      "triangles": 50,
+      "sha256": "d296074467314895b56707efee38826c7ce414e16345513e4a74cb8e64c51835"
+    },
+    {
+      "id": "way/205658303",
+      "version": 2,
+      "tags": {
+        "building": "yes",
+        "name": "瑞泰大厦",
+        "name:en": "Rui Tai Building"
+      },
+      "position": [
+        -255.31486979306126,
+        0,
+        -140.4235165363998
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205658303.glb",
+      "triangles": 20,
+      "sha256": "6126366927f359d962dd5232e252fc90f0e5cecf58c9788479f1326f8f6d3171"
+    },
+    {
+      "id": "way/205658307",
+      "version": 3,
+      "tags": {
+        "addr:city": "Liuzhou",
+        "addr:district": "Chengzhong",
+        "addr:housenumber": "25",
+        "addr:province": "Guangxi",
+        "addr:street": "龙城路",
+        "building": "construction",
+        "name": "龙城大厦",
+        "name:en": "Long Cheng Building"
+      },
+      "position": [
+        -261.8676739048514,
+        0,
+        -208.36494021922567
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205658307.glb",
+      "triangles": 20,
+      "sha256": "c50f1722be831dc7e9246212be5e4998c3d550ce4e8ea530d4984b975efc8e92"
+    },
+    {
+      "id": "way/205661082",
+      "version": 3,
+      "tags": {
+        "building": "yes",
+        "name": "中旅大厦",
+        "name:en": "Zhong Lv Building"
+      },
+      "position": [
+        101.20499178888089,
+        0,
+        108.36448496748693
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205661082.glb",
+      "triangles": 32,
+      "sha256": "991a5f8a9c248a9dafef367905b3f17a7a898866a8645b9c5889c5477f90cb85"
+    },
+    {
+      "id": "way/205661092",
+      "version": 3,
+      "tags": {
+        "addr:city": "liuzhou",
+        "addr:district": "Cheng Zhong",
+        "addr:housenumber": "42",
+        "addr:province": "Guangxi",
+        "addr:street": "中山东路",
+        "building": "yes",
+        "name": "柳州市眼科医院行政办公楼",
+        "name:en": "The admistrative office of ophthalmology hospital"
+      },
+      "position": [
+        104.42174602022504,
+        0,
+        61.13555064866385
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205661092.glb",
+      "triangles": 32,
+      "sha256": "4fd30d54ddd375fa173c0eef10126aaaf9687bfac0eade03007ebf36fadb27f2"
+    },
+    {
+      "id": "way/205661093",
+      "version": 4,
+      "tags": {
+        "building": "yes",
+        "name": "金长城大厦",
+        "name:en": "Golden great wall building"
+      },
+      "position": [
+        71.10379170185035,
+        0,
+        122.01647207102546
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-205661093.glb",
+      "triangles": 44,
+      "sha256": "489f6a979d772e89867f41378e5bee288236afc64c634826548661992d2a29aa"
+    },
+    {
+      "id": "way/641119425",
+      "version": 2,
+      "tags": {
+        "building": "commercial",
+        "name": "五星商贸大厦"
+      },
+      "position": [
+        -81.53657683462147,
+        0,
+        194.21490237629436
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-641119425.glb",
+      "triangles": 32,
+      "sha256": "20fa1a49cadc60069a85919dc7fbcdc8d44ec41affd3c9427f89249cb71e374e"
+    },
+    {
+      "id": "way/641119429",
+      "version": 2,
+      "tags": {
+        "building": "commercial"
+      },
+      "position": [
+        -3.268197857793345,
+        0,
+        -3.4054388785864047
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-641119429.glb",
+      "triangles": 158,
+      "sha256": "967a6862e091c0cca5a8026f33dbc499010f412e08ff193233a8e0bd4c5cc8dd"
+    },
+    {
+      "id": "way/641119432",
+      "version": 1,
+      "tags": {
+        "building": "commercial"
+      },
+      "position": [
+        -192.06829338218603,
+        0,
+        0.42167935782389393
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-641119432.glb",
+      "triangles": 104,
+      "sha256": "29ffb0ca4cff826bd67a0aa91d9842acba4aac7d767437dfbda8fb96d435964d"
+    },
+    {
+      "id": "way/641119437",
+      "version": 3,
+      "tags": {
+        "brand": "新华书店",
+        "brand:en": "Xinhua Bookstore",
+        "brand:wikidata": "Q6124193",
+        "brand:zh": "新华书店",
+        "building": "commercial",
+        "name": "新华书店",
+        "name:en": "Xinhua Bookstore",
+        "name:zh": "新华书店",
+        "shop": "books"
+      },
+      "position": [
+        -21.968535875625903,
+        0,
+        157.36346839296206
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-641119437.glb",
+      "triangles": 38,
+      "sha256": "c36efdd41c2fef9f12e1d0a65d304f72f8c6f794bb560886f552d3b5805911d1"
+    },
+    {
+      "id": "way/641119439",
+      "version": 1,
+      "tags": {
+        "building": "commercial"
+      },
+      "position": [
+        -17.417371735132075,
+        0,
+        203.11994640532876
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-641119439.glb",
+      "triangles": 20,
+      "sha256": "57fee4a39908f8896cac6eb99069bc300d764b5bbeb12e45bd2b4145ac4c89b3"
+    },
+    {
+      "id": "way/641119441",
+      "version": 1,
+      "tags": {
+        "building": "commercial"
+      },
+      "position": [
+        -8.377664758248878,
+        0,
+        244.00752724553567
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-641119441.glb",
+      "triangles": 20,
+      "sha256": "6917b0ed0bf3f2a0c941b481bfc4479052cd3cc0fe8f15f54b7382bb32ab9418"
+    },
+    {
+      "id": "way/641119445",
+      "version": 1,
+      "tags": {
+        "building": "commercial"
+      },
+      "position": [
+        -45.247127237121816,
+        0,
+        -188.77132905861203
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-641119445.glb",
+      "triangles": 44,
+      "sha256": "5f677de1062599e619f65e4a237cd25b28afe0123386b19652bfdced3c129ed4"
+    },
+    {
+      "id": "way/641119449",
+      "version": 1,
+      "tags": {
+        "building": "commercial"
+      },
+      "position": [
+        -62.860140296694034,
+        0,
+        -269.32794516191984
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-641119449.glb",
+      "triangles": 20,
+      "sha256": "a4619859d5ff2f77a4efc9f6950b72a32f1f63ca4b216dc02339d8c2d98ecccd"
+    },
+    {
+      "id": "way/1044328353",
+      "version": 1,
+      "tags": {
+        "building": "commercial",
+        "name": "五象百货"
+      },
+      "position": [
+        -48.87579344385925,
+        0,
+        6.0725599754951745
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1044328353.glb",
+      "triangles": 32,
+      "sha256": "16923c2bec6b42a411ebd5b7907abc03fa9cba6154b4db24667115ba4e001bbd"
+    },
+    {
+      "id": "way/1044328354",
+      "version": 1,
+      "tags": {
+        "building": "commercial",
+        "name": "地王大厦"
+      },
+      "position": [
+        -68.38698781480694,
+        0,
+        297.9084294806572
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1044328354.glb",
+      "triangles": 20,
+      "sha256": "bdac312930ea23c2593d74e2c521869e08e256e2aabdbdc05adc8fb5f8fd080d"
+    },
+    {
+      "id": "way/1275168866",
+      "version": 1,
+      "tags": {
+        "building": "yes",
+        "name": "柳州宾馆",
+        "tourism": "hotel"
+      },
+      "position": [
+        -143.09033393913916,
+        0,
+        87.77814216372548
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1275168866.glb",
+      "triangles": 26,
+      "sha256": "b00ffcc2dbe10e29bd292ec546cb163b42d0684133727c10d75fe0cd5501fd34"
+    },
+    {
+      "id": "way/1275168894",
+      "version": 1,
+      "tags": {
+        "building": "yes",
+        "name": "风晴港购物中心",
+        "shop": "mall"
+      },
+      "position": [
+        -173.88221754482325,
+        0,
+        227.31737903097877
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1275168894.glb",
+      "triangles": 74,
+      "sha256": "793fb40090352fed8457a639b85c6dc59b9e621fde0792bc8ad003e5df553efc"
+    },
+    {
+      "id": "way/1275168895",
+      "version": 1,
+      "tags": {
+        "building": "apartments"
+      },
+      "position": [
+        -198.90813941838945,
+        0,
+        224.15501242064175
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1275168895.glb",
+      "triangles": 44,
+      "sha256": "9c3d282f5ea5476dc231eaf581c36b2f4ec391329d326afc448e601acafe432d"
+    },
+    {
+      "id": "way/1275168896",
+      "version": 2,
+      "tags": {
+        "building": "apartments"
+      },
+      "position": [
+        -144.95357303123396,
+        0,
+        226.1161840765843
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1275168896.glb",
+      "triangles": 50,
+      "sha256": "7d94e226ab5faf01116f66de28cf20d32e900fec34dbeb0700783720cf3ea325"
+    },
+    {
+      "id": "way/1351248938",
+      "version": 1,
+      "tags": {
+        "amenity": "fast_food",
+        "brand": "麦当劳",
+        "brand:en": "McDonald's",
+        "brand:wikidata": "Q38076",
+        "brand:zh": "麦当劳",
+        "building": "yes",
+        "cuisine": "burger",
+        "name": "麦当劳",
+        "name:en": "McDonald's",
+        "name:zh": "麦当劳",
+        "takeaway": "yes"
+      },
+      "position": [
+        -40.75668374494455,
+        0,
+        118.91946894334488
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1351248938.glb",
+      "triangles": 20,
+      "sha256": "f89364a22a984cec9287506bdfe1e98a7c6cbd291a42e9be28521279cb2398e1"
+    },
+    {
+      "id": "way/1351248939",
+      "version": 1,
+      "tags": {
+        "amenity": "fast_food",
+        "brand": "肯德基",
+        "brand:en": "KFC",
+        "brand:wikidata": "Q524757",
+        "brand:zh": "肯德基",
+        "building": "yes",
+        "cuisine": "chicken",
+        "name": "肯德基",
+        "name:en": "KFC",
+        "name:zh": "肯德基",
+        "takeaway": "yes"
+      },
+      "position": [
+        -154.34723660816522,
+        0,
+        190.63190776926777
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1351248939.glb",
+      "triangles": 20,
+      "sha256": "a31836254ec03af105df18b585667640f09e5c8d039fe99547b297d2cab1ef4b"
+    },
+    {
+      "id": "way/1351248940",
+      "version": 1,
+      "tags": {
+        "building": "commercial",
+        "name": "广惠大厦"
+      },
+      "position": [
+        -112.38376016971807,
+        0,
+        15.79408092787712
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1351248940.glb",
+      "triangles": 44,
+      "sha256": "5fca0955007f227a9b902ef13aaeaa600ff5cd6126b2f4ac2f37653c85182aa2"
+    },
+    {
+      "id": "way/1351248943",
+      "version": 1,
+      "tags": {
+        "building": "commercial",
+        "name": "淘园世家"
+      },
+      "position": [
+        -92.44940520499982,
+        0,
+        -225.64689934015033
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1351248943.glb",
+      "triangles": 44,
+      "sha256": "1905202b9318af6311fc8cc15c3160b6f3a5c9dd8e650eb378d8eb4f75fa8d6c"
+    },
+    {
+      "id": "way/1362097344",
+      "version": 1,
+      "tags": {
+        "building": "yes"
+      },
+      "position": [
+        263.38032582479656,
+        0,
+        -214.01383205922878
+      ],
+      "heightSource": "missing",
+      "height": null,
+      "modelHeight": 3.0,
+      "file": "buildings/way-1362097344.glb",
+      "triangles": 32,
+      "sha256": "b61858c0a62f7f5bb39c25aec4f2b8c1764f4a8e518021a3159dc064015f20ab"
+    }
+  ]
+}
