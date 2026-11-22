@@ -55,10 +55,11 @@ export class SceneManager {
       0.1,
       3000,
     );
-    this.camera.position.set(0, 400, 450);
+    // 宽幅视角：能看到整个 ~2km×2.8km 范围（含柳江）
+    this.camera.position.set(0, 1200, 1400);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.target.set(0, 0, 0);
+    this.controls.target.set(0, 0, 100);
     this.controls.enableDamping = true;
     this.controls.update();
 
