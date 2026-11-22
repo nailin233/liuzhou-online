@@ -40,6 +40,21 @@ test('roads.json exists and has OSM attribution', () => {
   assert.ok(Array.isArray(roads.roads) && roads.roads.length > 0, 'must have road entries');
 });
 
+test('manifest-overture has 2891 buildings with Overture attribution', () => {
+  const p = new URL('../public/models/wuxing-street/manifest-overture.json', import.meta.url);
+  assert.ok(existsSync(p), 'manifest-overture.json must exist');
+  const m = JSON.parse(readFileSync(p, 'utf8'));
+  assert.ok(m.attribution?.includes('OpenStreetMap'), 'must attribute OpenStreetMap');
+  assert.ok(m.attribution?.includes('Overture'), 'must attribute Overture Maps');
+  assert.ok(m.license?.includes('ODbL'), 'must be ODbL');
+  assert.equal(m.buildings?.length, 2891, `expected 2891 buildings, got ${m.buildings?.length}`);
+  // ML + OSM 两种来源都应存在
+  const mlCount  = m.buildings.filter(b => b.sourceType === 'ml').length;
+  const osmCount = m.buildings.filter(b => b.sourceType === 'osm').length;
+  assert.ok(mlCount  > 2000, `expected >2000 ML buildings, got ${mlCount}`);
+  assert.ok(osmCount >= 240,  `expected >=240 OSM buildings, got ${osmCount}`);
+});
+
 test('manifest-wide has 240 buildings with OSM attribution', () => {
   const widePath = new URL('../public/models/wuxing-street/manifest-wide.json', import.meta.url);
   assert.ok(existsSync(widePath), 'manifest-wide.json must exist');
