@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 param(
-  [Parameter(Mandatory)][ValidateSet('claude','codex','grok')][string]$Agent,
+  [Parameter(Mandatory)][ValidateSet('claude','codex','grok','dsh')][string]$Agent,
   [Parameter(Mandatory)][string]$Worktree,
   [Parameter(Mandatory)][string]$PromptFile,
   [Parameter(Mandatory)][string]$LogFile,
@@ -16,8 +16,18 @@ $env:CI = '1'
 if ($Agent -eq 'codex') {
   & codex exec --sandbox workspace-write --output-last-message $ReportFile $promptText *> $LogFile
   $rc = $LASTEXITCODE
+} elseif ($Agent -eq 'dsh') {
+  # One-shot DeepSeek Harness. Stdin task mode can be used for very long prompts,
+  # but this harness uses the single positional task for portability.
+  # Headless unattended policy rejects operations requiring interactive approval.
+  & dsh --profile headless --permission-mode workspace-write --approval-policy never $promptText 1> $ReportFile 2> $LogFile
+  $rc = $LASTEXITCODE
+  if ($rc -eq 0 -and [string]::IsNullOrWhiteSpace((Get-Content -LiteralPath $ReportFile -Raw -Encoding UTF8))) {
+    throw 'DSH returned an empty report'
+  }
 } elseif ($Agent -eq 'claude') {
-  & claude -p $promptText --permission-mode dontAsk --permission-prompts none --tools 'Read,Edit,Write,Glob,Grep' --allowedTools 'Read,Glob,Grep,Edit(./docs/**),Write(./docs/**)' --strict-mcp-config --disable-slash-commands --max-turns 24 --output-format json > $LogFile 2> "$LogFile.stderr"
+  $claudeBudget = if ($env:LIUZHOU_CLAUDE_MAX_BUDGET_USD) { $env:LIUZHOU_CLAUDE_MAX_BUDGET_USD } else { '0.75' }
+  & claude -p $promptText --permission-mode dontAsk --permission-prompts none --tools 'Read,Edit,Write,Glob,Grep' --allowedTools 'Read,Glob,Grep,Edit(./docs/**),Write(./docs/**)' --strict-mcp-config --disable-slash-commands --max-turns 18 --max-budget-usd $claudeBudget --output-format json > $LogFile 2> "$LogFile.stderr"
   $rc = $LASTEXITCODE
   if ($rc -eq 0) {
     try {

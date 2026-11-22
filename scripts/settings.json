@@ -1,8 +1,16 @@
 {
   "pollSeconds": 45,
   "maxTaskMinutes": 60,
-  "maxParallelAgents": 3,
-  "maxTasksPerSession": 6,
+  "maxParallelAgents": 2,
+  "maxTasksPerSession": 4,
   "mergeStrategy": "human-only",
-  "notes": "Single dispatcher per machine. One active task per agent. Never auto-merge."
+  "notes": "DSH routine implementation, Claude API capped per call, Codex intentionally off until explicitly enabled. No automatic merges. DSH provider spending must be controlled separately at provider dashboard.",
+  "maxTasksPerAgent": {
+    "dsh": 2,
+    "claude": 1,
+    "grok": 1,
+    "codex": 1
+  },
+  "enableCodex": false,
+  "claudeMaxBudgetUsd": 0.75
 }
