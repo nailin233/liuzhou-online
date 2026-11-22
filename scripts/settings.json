@@ -1,0 +1,8 @@
+{
+  "pollSeconds": 45,
+  "maxTaskMinutes": 60,
+  "maxParallelAgents": 3,
+  "maxTasksPerSession": 6,
+  "mergeStrategy": "human-only",
+  "notes": "Single dispatcher per machine. One active task per agent. Never auto-merge."
+}
