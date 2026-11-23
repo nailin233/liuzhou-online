@@ -20,8 +20,8 @@ app.innerHTML = `
   <section class="panel">
     <div class="eyebrow">LIUZHOU ONLINE</div>
     <h1>网上柳州</h1>
-    <p>五星街周边，建筑与道路来自 OpenStreetMap。<br>
-       灰紫斜纹为缺失高度的建筑（3 m 占位）。</p>
+    <p>五星街周边，建筑来自 Overture Maps（OSM + ML）及 OpenStreetMap，道路与水系来自 OpenStreetMap。<br>
+       灰紫斜纹为缺失高度的建筑（3 m 占位）；柳江以中心线示意，未还原实际岸线。</p>
     <p class="hint">拖动旋转 · 滚轮缩放 · 右键平移 · <kbd>L</kbd> 图例 · <kbd>N</kbd> 朝北</p>
     <button id="reset-view" type="button">重置视角</button>
   </section>
@@ -36,26 +36,38 @@ setupLighting(scene.scene);
 const ground = createMapGround();
 scene.add(ground);
 
-const hud = new MapHUD(document.body);
+function orientNorth(): void {
+  const dist = scene.camera.position.distanceTo(scene.controls.target);
+  const offset = new THREE.Vector3().subVectors(scene.camera.position, scene.controls.target);
+  const currentPolar = Math.min(
+    Math.max(Math.acos(THREE.MathUtils.clamp(offset.y / Math.max(dist, 1), -1, 1)), 0.2),
+    Math.PI / 2 - 0.05,
+  );
+  scene.controls.enableDamping = false;
+  scene.camera.position.set(
+    scene.controls.target.x,
+    scene.controls.target.y + dist * Math.cos(currentPolar),
+    scene.controls.target.z + dist * Math.sin(currentPolar),
+  );
+  scene.controls.update();
+  scene.controls.enableDamping = true;
+}
+
+const hud = new MapHUD(document.body, {
+  onCompassClick: orientNorth,
+});
 
 document.querySelector<HTMLButtonElement>('#reset-view')!.addEventListener('click', () => {
   scene.controls.enableDamping = false;
-  scene.controls.update();
   scene.controls.reset();
+  scene.controls.update();
   scene.controls.enableDamping = true;
 });
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'n' || e.key === 'N') {
-    const dist = scene.camera.position.distanceTo(scene.controls.target);
-    scene.camera.position.set(
-      scene.controls.target.x,
-      scene.controls.target.y + dist * Math.sin(Math.PI / 4),
-      scene.controls.target.z + dist * Math.cos(Math.PI / 4),
-    );
-    scene.controls.update();
-  }
-});
+const onKeyDown = (e: KeyboardEvent) => {
+  if (e.key === 'n' || e.key === 'N') orientNorth();
+};
+document.addEventListener('keydown', onKeyDown);
 
 // ── 异步加载地图数据 ────────────────────────────────────────────────────────────
 let disposed = false;
@@ -87,11 +99,12 @@ let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0, _dataSource = '';
 
     buildingsTotal   = buildResult.stats.total;
     buildingsMissing = buildResult.stats.missing;
-    roadsTotal       = rGroup.children.length;
-    // 记录数据源（供 HUD 显示）
-    _dataSource = buildResult.stats.source;
+    roadsTotal       = (rGroup.userData.roadCount as number) ?? rGroup.children.length;
+    _dataSource      = buildResult.stats.source;
+    hud.setAttributionForSource(_dataSource);
   } catch (err) {
     console.error('地图加载失败', err);
+    hud.showError(err instanceof Error ? err.message : String(err));
   }
 })();
 
@@ -99,6 +112,9 @@ let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0, _dataSource = '';
 let frames = 0, lastFps = performance.now();
 
 scene.startRendering(() => {
+  // 每帧平滑更新指北针
+  hud.updateCompass(scene.camera, scene.controls);
+
   frames++;
   const now = performance.now();
   if (now - lastFps >= 1000) {
@@ -114,7 +130,6 @@ scene.startRendering(() => {
       roadsTotal,
       dataSource:       _dataSource,
     });
-    hud.updateCompass(scene.camera, scene.controls);
   }
 });
 
@@ -122,6 +137,7 @@ scene.startRendering(() => {
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     disposed = true;
+    document.removeEventListener('keydown', onKeyDown);
     scene.stopRendering();
     if (buildingGroup) disposeBuildings(buildingGroup);
     if (roadGroup)     disposeRoads(roadGroup);

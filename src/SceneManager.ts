@@ -44,24 +44,28 @@ export class SceneManager {
     if (options.enableFog !== false) {
       this.scene.fog = new THREE.Fog(
         options.fogColor ?? options.backgroundColor ?? 0x101820,
-        options.fogNear ?? 600,
-        options.fogFar ?? 1400,
+        options.fogNear ?? 1800,
+        options.fogFar ?? 4600,
       );
     }
 
     this.camera = new THREE.PerspectiveCamera(
       55,
       this.container.clientWidth / Math.max(1, this.container.clientHeight),
-      0.1,
-      3000,
+      1,
+      8000,
     );
-    // 宽幅视角：能看到整个 ~2km×2.8km 范围（含柳江）
-    this.camera.position.set(0, 1200, 1400);
+    // 宽幅视角：默认位于原点南侧上方，首屏清晰可见五星街核心区与柳江
+    this.camera.position.set(0, 720, 860);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.target.set(0, 0, 100);
+    this.controls.target.set(0, 0, 120);
     this.controls.enableDamping = true;
+    this.controls.maxPolarAngle = Math.PI / 2 - 0.03; // 禁止钻入地下
+    this.controls.minDistance = 40;
+    this.controls.maxDistance = 2800; // 防止拉远超出雾距全黑
     this.controls.update();
+    this.controls.saveState();
 
     this.resizeObserver = new ResizeObserver(() => this.handleResize());
     this.resizeObserver.observe(this.container);

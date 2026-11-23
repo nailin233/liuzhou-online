@@ -1,85 +1,74 @@
 /**
- * Coordinate System - 坐标系统转换工具
- * 
- * 处理 WGS84 地理坐标 (经纬度) 到本地笛卡尔坐标 (米) 的转换
- * 
- * 状态: 骨架代码，等待 Claude 架构设计完成后实现
+ * Coordinate System - WGS84 地理坐标到本地米制 3D 坐标转换工具
+ *
+ * 原点：OSM 锚点 node/6038500119（五星街 way/205513960 第 6 节点）
+ *   lon = 109.4086882°E, lat = 24.3157756°N
+ * 坐标系：右手系，单位米（m）
+ *   +X = 东，+Y = 上，+Z = 南（北为 -Z）
+ * 投影：地球半径 R = 6378137 m 的局部等距圆柱近似（与 manifest*.json / roads.json / waterways.json 一致）
  */
 
+export const EARTH_RADIUS_M = 6378137.0;
+const DEG_TO_RAD = Math.PI / 180;
+
 export interface GeoCoordinate {
-  /** 纬度 (Latitude) */
+  /** 纬度 (Latitude, WGS84 十进制度) */
   lat: number;
-  /** 经度 (Longitude) */
+  /** 经度 (Longitude, WGS84 十进制度) */
   lon: number;
-  /** 可选高度 (米) */
+  /** 可选高程 (米) */
   alt?: number;
 }
 
 export interface LocalCoordinate {
   /** X 坐标 (米, 东向为正) */
   x: number;
-  /** Y 坐标 (米, 高度) */
+  /** Y 坐标 (米, 上向为正) */
   y: number;
-  /** Z 坐标 (米, 北向为正) */
+  /** Z 坐标 (米, 南向为正, 北向为负) */
   z: number;
 }
 
-/**
- * 坐标转换器
- * 
- * TODO: 实现基于 Mercator 或 UTM 的转换算法
- * TODO: 需要定义柳州市区的参考原点
- */
-export class CoordinateSystem {
-  private originLat: number;
-  private originLon: number;
+/** 已审计的五星街基准锚点（OSM node/6038500119） */
+export const WUXING_STREET_ORIGIN: GeoCoordinate = {
+  lat: 24.3157756,
+  lon: 109.4086882,
+  alt: 0,
+};
 
-  constructor(originLat: number, originLon: number) {
+export class CoordinateSystem {
+  private readonly originLat: number;
+  private readonly originLon: number;
+  private readonly cosOriginLat: number;
+
+  constructor(
+    originLat: number = WUXING_STREET_ORIGIN.lat,
+    originLon: number = WUXING_STREET_ORIGIN.lon,
+  ) {
     this.originLat = originLat;
     this.originLon = originLon;
+    this.cosOriginLat = Math.cos(originLat * DEG_TO_RAD);
   }
 
-  /**
-   * 将 WGS84 坐标转换为本地坐标
-   * 
-   * @param geo WGS84 经纬度坐标
-   * @returns 本地笛卡尔坐标 (米)
-   */
+  /** 将 WGS84 经纬度转换为本地米制坐标 (+X 东, +Y 上, +Z 南) */
   public geoToLocal(geo: GeoCoordinate): LocalCoordinate {
-    // TODO: 实现真实的坐标转换
-    // 当前返回占位值
-    console.warn('CoordinateSystem.geoToLocal() 尚未实现');
+    const x = (geo.lon - this.originLon) * DEG_TO_RAD * EARTH_RADIUS_M * this.cosOriginLat;
+    const z = -(geo.lat - this.originLat) * DEG_TO_RAD * EARTH_RADIUS_M;
     return {
-      x: 0,
+      x: x === 0 ? 0 : x,
       y: geo.alt ?? 0,
-      z: 0,
+      z: z === 0 ? 0 : z,
     };
   }
 
-  /**
-   * 将本地坐标转换为 WGS84 坐标
-   * 
-   * @param local 本地笛卡尔坐标
-   * @returns WGS84 经纬度坐标
-   */
+  /** 将本地米制坐标逆转换为 WGS84 经纬度 */
   public localToGeo(local: LocalCoordinate): GeoCoordinate {
-    // TODO: 实现真实的坐标转换
-    console.warn('CoordinateSystem.localToGeo() 尚未实现');
+    const lat = this.originLat - local.z / (DEG_TO_RAD * EARTH_RADIUS_M);
+    const lon = this.originLon + local.x / (DEG_TO_RAD * EARTH_RADIUS_M * this.cosOriginLat);
     return {
-      lat: this.originLat,
-      lon: this.originLon,
+      lat,
+      lon,
       alt: local.y,
     };
   }
 }
-
-/**
- * 五星街区域的临时参考点 (待 Grok 调研确认)
- * 
- * 注意: 这是占位值，不是准确坐标
- */
-export const WUXING_STREET_ORIGIN: GeoCoordinate = {
-  lat: 24.3264, // 临时值
-  lon: 109.4281, // 临时值
-  alt: 0,
-};

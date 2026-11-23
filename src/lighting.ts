@@ -9,17 +9,16 @@ export function setupLighting(scene: THREE.Scene): void {
   scene.add(hemi);
 
   // 平行光（太阳）：方位角 225°（西南），高度角 50°
-  // 位置 ≈ (−182, 306, 182)，光从该方向射向原点
   const sun = new THREE.DirectionalLight(0xFFE0B5, 2.4);
-  sun.position.set(-182, 306, 182);
+  sun.position.set(-455, 765, 455);
   sun.castShadow = true;
   sun.shadow.mapSize.width  = 2048;
   sun.shadow.mapSize.height = 2048;
   const sc = sun.shadow.camera as THREE.OrthographicCamera;
-  sc.left = sc.bottom = -300;
-  sc.right = sc.top = 300;
-  sc.near = 10;
-  sc.far  = 1000;
+  sc.left = sc.bottom = -900;
+  sc.right = sc.top = 900;
+  sc.near = 50;
+  sc.far  = 2500;
   sun.shadow.bias       = -0.0005;
   sun.shadow.normalBias = 0.5;
   scene.add(sun);

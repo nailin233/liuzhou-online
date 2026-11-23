@@ -1,6 +1,6 @@
 /**
- * MapHUD — HUD、指北针、图例、ODbL 常驻署名
- * art-direction.md §5 界面布局
+ * MapHUD — HUD、指北针、图例、常驻署名与加载失败提示
+ * art-direction.md §4–§5 界面与防重叠布局规范
  */
 import * as THREE from 'three';
 
@@ -14,93 +14,90 @@ export interface HUDState {
   dataSource?: string;  // 数据来源标签（如 'Overture 2891'）
 }
 
+export interface MapHUDOptions {
+  onCompassClick?: () => void;
+}
+
 export class MapHUD {
   private statusEl:   HTMLElement;
-  private compassEl:  HTMLElement;
+  private compassEl:  HTMLButtonElement;
   private legendEl:   HTMLElement;
-  private attrEl:     HTMLElement;
+  private attrEl:     HTMLAnchorElement;
+  private errorEl:    HTMLElement | null = null;
+  private onKeyDown:  (e: KeyboardEvent) => void;
+  private onCompass?: () => void;
 
-  constructor(container: HTMLElement) {
-    // ── 状态栏 (右下) ──
+  constructor(container: HTMLElement, options: MapHUDOptions = {}) {
+    this.onCompass = options.onCompassClick;
+
+    // ── 状态栏 (右下；移动端位于署名上方) ──
     this.statusEl = document.createElement('div');
     this.statusEl.id = 'map-hud';
-    Object.assign(this.statusEl.style, {
-      position: 'fixed', bottom: '22px', right: '30px', zIndex: '5',
-      color: '#86b9b8', fontSize: '12px', pointerEvents: 'none',
-      fontFamily: "'Segoe UI','Microsoft YaHei UI',sans-serif",
-      lineHeight: '1.8',
-    });
+    this.statusEl.className = 'map-hud';
     container.appendChild(this.statusEl);
 
-    // ── 指北针 (右上) ──
-    this.compassEl = document.createElement('div');
+    // ── 指北针 (右上，位于 header 下方，可点击重置朝北) ──
+    this.compassEl = document.createElement('button');
     this.compassEl.id = 'map-compass';
-    this.compassEl.title = '按 N 重置朝北';
+    this.compassEl.className = 'map-compass';
+    this.compassEl.type = 'button';
+    this.compassEl.title = '点击或按 N 重置朝北';
+    this.compassEl.setAttribute('aria-label', '重置朝北');
     this.compassEl.innerHTML = `
-      <svg width="48" height="48" viewBox="0 0 48 48">
-        <circle cx="24" cy="24" r="22" fill="#101820" stroke="#3E8F91" stroke-width="1.5" opacity="0.85"/>
+      <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="22" fill="#101820" stroke="#3E8F91" stroke-width="1.5" opacity="0.88"/>
         <polygon id="compass-n" points="24,6 20,24 24,28 28,24" fill="#D9549B"/>
         <polygon id="compass-s" points="24,42 20,24 24,20 28,24" fill="#86b9b8" opacity="0.6"/>
-        <text x="24" y="12" text-anchor="middle" fill="#EDF4F5" font-size="8"
+        <text x="24" y="13" text-anchor="middle" fill="#EDF4F5" font-size="8"
               font-family="'Segoe UI',sans-serif">N</text>
       </svg>`;
-    Object.assign(this.compassEl.style, {
-      position: 'fixed', top: '20px', right: '28px', zIndex: '5',
-      cursor: 'pointer', userSelect: 'none',
+    this.compassEl.addEventListener('click', () => {
+      this.onCompass?.();
     });
     container.appendChild(this.compassEl);
 
     // ── 图例 (左下，按 L 切换) ──
     this.legendEl = document.createElement('div');
     this.legendEl.id = 'map-legend';
+    this.legendEl.className = 'map-legend';
+    this.legendEl.style.display = 'none'; // 默认隐藏，按 L 切换
     this.legendEl.innerHTML = `
-      <div style="font-size:11px;letter-spacing:.18em;color:#86b9b8;margin-bottom:6px">图例</div>
-      ${this.legendRow('#9FB0B8','#BCC9CE','OSM 建筑（有层数）')}
-      ${this.legendRow('#5C4A57','#6E5868','OSM 建筑（高度缺失）', '#D9549B')}
-      ${this.legendRow('#3A4954','#3A4954','主干道 / 次干道')}
-      ${this.legendRow('#5A6B62','#5A6B62','步行街')}
+      <div class="map-legend-title">图例</div>
+      ${this.legendRow('#C9D2D6', '建筑（实测高度）')}
+      ${this.legendRow('#9FB0B8', '建筑（按层数估算）')}
+      ${this.legendRow('#5C4A57', '建筑（高度缺失 · 3 m 占位）', '#D9549B')}
+      ${this.legendRow('#3A4954', '主干道 / 次干道')}
+      ${this.legendRow('#5A6B62', '步行街')}
+      ${this.legendRow('#1F4A5C', '水系（中心线示意）')}
     `;
-    Object.assign(this.legendEl.style, {
-      position: 'fixed', bottom: '48px', left: '20px', zIndex: '5',
-      background: 'rgba(16,24,32,.82)', backdropFilter: 'blur(6px)',
-      padding: '12px 16px', borderRadius: '6px',
-      border: '1px solid #ffffff16', fontSize: '12px',
-      color: '#EDF4F5', pointerEvents: 'none',
-      fontFamily: "'Segoe UI','Microsoft YaHei UI',sans-serif",
-      display: 'none',   // 默认隐藏，按 L 显示
-    });
     container.appendChild(this.legendEl);
 
-    // ── ODbL 常驻署名 (左下) ──
-    const attrA = document.createElement('a') as HTMLAnchorElement;
+    // ── ODbL / Overture 常驻署名 (左下最底) ──
+    const attrA = document.createElement('a');
     attrA.id     = 'map-attribution';
+    attrA.className = 'map-attribution';
     attrA.href   = 'https://www.openstreetmap.org/copyright';
     attrA.target = '_blank';
     attrA.rel    = 'noopener noreferrer';
     attrA.textContent = '© OpenStreetMap contributors · ODbL 1.0';
     this.attrEl = attrA;
-    Object.assign(this.attrEl.style, {
-      position: 'fixed', bottom: '18px', left: '20px', zIndex: '6',
-      color: '#d5e1e5', background: 'rgba(16,24,32,.78)',
-      fontSize: '11px', padding: '3px 7px', borderRadius: '3px',
-      textDecoration: 'none', pointerEvents: 'auto',
-    });
     container.appendChild(this.attrEl);
 
-    // 键盘快捷键
-    document.addEventListener('keydown', e => {
+    // 键盘快捷键 (L 切换图例)
+    this.onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'l' || e.key === 'L') this.toggleLegend();
-    });
+    };
+    document.addEventListener('keydown', this.onKeyDown);
   }
 
-  private legendRow(sideHex: string, topHex: string, label: string, stripeHex?: string): string {
+  private legendRow(fillHex: string, label: string, stripeHex?: string): string {
     const border = stripeHex ? `border:1px solid ${stripeHex};` : '';
-    const stripe = stripeHex
-      ? `background:repeating-linear-gradient(45deg,${sideHex},${sideHex} 3px,${stripeHex} 3px,${stripeHex} 5px);`
-      : `background:${sideHex};`;
-    return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
-      <div style="width:14px;height:14px;border-radius:2px;${stripe}${border}flex-shrink:0"></div>
-      <span style="color:#AFC4CB">${label}</span>
+    const bg = stripeHex
+      ? `background:repeating-linear-gradient(45deg,${fillHex},${fillHex} 3px,${stripeHex} 3px,${stripeHex} 5px);`
+      : `background:${fillHex};`;
+    return `<div class="map-legend-row">
+      <div class="map-legend-swatch" style="${bg}${border}"></div>
+      <span>${label}</span>
     </div>`;
   }
 
@@ -108,39 +105,68 @@ export class MapHUD {
     this.legendEl.style.display = this.legendEl.style.display === 'none' ? 'block' : 'none';
   }
 
-  /** 更新指北针旋转：angle 是相机绕 Y 轴的方位角（弧度，Three.js） */
+  public setAttributionForSource(dataSource?: string): void {
+    if (dataSource && /overture/i.test(dataSource)) {
+      this.attrEl.textContent = '© OpenStreetMap contributors · Overture Maps Foundation · ODbL 1.0';
+    } else {
+      this.attrEl.textContent = '© OpenStreetMap contributors · ODbL 1.0';
+    }
+  }
+
+  public showError(reason: string): void {
+    if (!this.errorEl) {
+      this.errorEl = document.createElement('div');
+      this.errorEl.id = 'map-load-error';
+      this.errorEl.className = 'map-load-error';
+      document.body.appendChild(this.errorEl);
+    }
+    this.errorEl.textContent = `数据加载失败：${reason}`;
+  }
+
+  /** 更新指北针旋转：指针始终指向世界 -Z（正北）在屏幕上的方向 */
   public updateCompass(camera: THREE.Camera, controls: { target: THREE.Vector3 }): void {
     const dir = new THREE.Vector3()
       .subVectors(camera.position, controls.target)
-      .setY(0).normalize();
-    // dir.z > 0 表示相机在 +Z（南），北在上方的屏幕角度
+      .setY(0);
+    if (dir.lengthSq() < 1e-6) return;
+    dir.normalize();
     const angle = Math.atan2(dir.x, dir.z) * (180 / Math.PI);
     const svg = this.compassEl.querySelector('svg');
     if (svg) {
-      // 只旋转指针部分（整个 SVG 内容，不含外框）
       const north = svg.querySelector('#compass-n') as SVGElement | null;
       const south = svg.querySelector('#compass-s') as SVGElement | null;
-      if (north) north.style.transform = `rotate(${angle}deg)`;
-      if (south) south.style.transform = `rotate(${angle}deg)`;
-      [north, south].forEach(el => el && (el.style.transformOrigin = '24px 24px'));
+      if (north) {
+        north.style.transformOrigin = '24px 24px';
+        north.style.transform = `rotate(${angle.toFixed(1)}deg)`;
+      }
+      if (south) {
+        south.style.transformOrigin = '24px 24px';
+        south.style.transform = `rotate(${angle.toFixed(1)}deg)`;
+      }
     }
   }
 
   public update(state: HUDState): void {
+    this.setAttributionForSource(state.dataSource);
     const missing = state.buildingsMissing > 0
       ? `<span style="color:#D9549B">缺失高度 ${state.buildingsMissing}/${state.buildingsTotal}</span>`
       : `建筑 ${state.buildingsTotal}`;
-    const src = state.dataSource ? `<span style="color:#7795a0;font-size:10px"> ${state.dataSource}</span>` : '';
+    const src = state.dataSource
+      ? `<span class="map-hud-src"> ${state.dataSource}</span>`
+      : '';
     this.statusEl.innerHTML =
       `WebGL · ${state.fps} FPS · 调用 ${state.drawCalls} · ` +
       `三角形 ${(state.triangles / 1000).toFixed(0)}k · ` +
-      `${missing} · 道路 ${state.roadsTotal}${src} · <kbd style="opacity:.6">L</kbd>图例`;
+      `${missing} · 道路 ${state.roadsTotal}${src} · <kbd>L</kbd>图例`;
   }
 
   public dispose(): void {
+    document.removeEventListener('keydown', this.onKeyDown);
     this.statusEl.remove();
     this.compassEl.remove();
     this.legendEl.remove();
     this.attrEl.remove();
+    this.errorEl?.remove();
+    this.errorEl = null;
   }
 }

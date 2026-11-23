@@ -6,9 +6,8 @@
  *  2. manifest-wide.json      (OSM 宽幅, 240 栋)
  *  3. manifest.json           (GLB fallback, 34 栋)
  *
- * 性能优化：
- *  - 2891 栋建筑按高度来源分批合并为 3 个 Mesh，降低 draw call
- *  - 每种 heightSource 一个 MergedGeometry
+ * 坐标系：+X 东 / +Y 上 / +Z 南
+ * ExtrudeGeometry 材质组：group 0 = 顶底盖 (top)，group 1 = 立面 (side)
  *
  * 颜色 (art-direction.md §2.2)：
  *  osm.height  立面 #C9D2D6 / 顶面 #E4EBED
@@ -73,63 +72,91 @@ export function disposeBuildings(group: THREE.Group): void {
   for (const m of mats) m.dispose();
 }
 
-// ── 单栋建筑挤出（返回侧面和顶面分离的几何体）────────────────────────────────
-function extrudeOne(outline: [number, number][], height: number): THREE.BufferGeometry | null {
-  if (outline.length < 3) return null;
-  const shape = new THREE.Shape();
-  shape.moveTo(outline[0][0], outline[0][1]);
-  for (let i = 1; i < outline.length; i++) shape.lineTo(outline[i][0], outline[i][1]);
-  shape.closePath();
-  const geo = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
-  geo.rotateX(-Math.PI / 2);
-  return geo;
+// ── 单栋建筑挤出 ──────────────────────────────────────────────────────────────
+// outline_local 为 [east(x), south(z)]；Shape 传入 (x, -z)，经 rotateX(-π/2) 后
+// (X, Y, Z_ext) -> (X, +Z_ext, -Y) = (east, height, south)，与世界坐标严格一致。
+export function extrudeBuildingGeometry(
+  outline: [number, number][],
+  height: number,
+): THREE.BufferGeometry | null {
+  if (outline.length < 3 || !(height > 0)) return null;
+  try {
+    const pts = (
+      outline.length > 3 &&
+      outline[0][0] === outline[outline.length - 1][0] &&
+      outline[0][1] === outline[outline.length - 1][1]
+    ) ? outline.slice(0, -1) : outline;
+    if (pts.length < 3) return null;
+
+    const shape = new THREE.Shape();
+    shape.moveTo(pts[0][0], -pts[0][1]);
+    for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], -pts[i][1]);
+    shape.closePath();
+
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
+    geo.rotateX(-Math.PI / 2);
+    return geo;
+  } catch {
+    return null;
+  }
 }
 
-// ── 合并几何体（提升大量建筑的渲染性能）──────────────────────────────────────
-function mergeGeometries(geos: THREE.BufferGeometry[]): THREE.BufferGeometry | null {
+// ── 合并几何体（支持非索引 ExtrudeGeometry，按材质组 0=top / 1=side 分桶合并）──
+export function mergeBuildingGeometries(
+  geos: THREE.BufferGeometry[],
+): THREE.BufferGeometry | null {
   if (geos.length === 0) return null;
-  // 手动合并（避免引入额外依赖）
-  let totalPos = 0, totalIdx = 0;
-  for (const g of geos) {
-    totalPos += (g.getAttribute('position') as THREE.BufferAttribute).count;
-    totalIdx += g.index ? g.index.count : 0;
-  }
 
-  const positions = new Float32Array(totalPos * 3);
-  const normals   = new Float32Array(totalPos * 3);
-  const indices   = new Uint32Array(totalIdx);
-  let posOff = 0, idxOff = 0, vertBase = 0;
+  const bucketPos: [number[], number[]] = [[], []];
+  const bucketNor: [number[], number[]] = [[], []];
 
-  for (const g of geos) {
-    const pos = g.getAttribute('position') as THREE.BufferAttribute;
-    const nor = g.getAttribute('normal')   as THREE.BufferAttribute;
-    const idx = g.index!;
-    const count = pos.count;
+  for (const raw of geos) {
+    const g = raw.index ? raw.toNonIndexed() : raw;
+    const pos = g.getAttribute('position') as THREE.BufferAttribute | undefined;
+    if (!pos || pos.count === 0) {
+      if (g !== raw) g.dispose();
+      raw.dispose();
+      continue;
+    }
+    const nor = g.getAttribute('normal') as THREE.BufferAttribute | undefined;
+    const groups = g.groups.length > 0
+      ? g.groups
+      : [{ start: 0, count: pos.count, materialIndex: 0 }];
 
-    for (let i = 0; i < count; i++) {
-      positions[(posOff + i) * 3]     = pos.getX(i);
-      positions[(posOff + i) * 3 + 1] = pos.getY(i);
-      positions[(posOff + i) * 3 + 2] = pos.getZ(i);
-      if (nor) {
-        normals[(posOff + i) * 3]     = nor.getX(i);
-        normals[(posOff + i) * 3 + 1] = nor.getY(i);
-        normals[(posOff + i) * 3 + 2] = nor.getZ(i);
+    for (const grp of groups) {
+      const mIdx: 0 | 1 = grp.materialIndex === 1 ? 1 : 0;
+      const outP = bucketPos[mIdx];
+      const outN = bucketNor[mIdx];
+      const end = Math.min(grp.start + grp.count, pos.count);
+      for (let i = grp.start; i < end; i++) {
+        outP.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+        if (nor) outN.push(nor.getX(i), nor.getY(i), nor.getZ(i));
+        else outN.push(0, 1, 0);
       }
     }
-    for (let i = 0; i < idx.count; i++) {
-      indices[idxOff + i] = idx.getX(i) + vertBase;
-    }
 
-    posOff   += count;
-    idxOff   += idx.count;
-    vertBase += count;
-    g.dispose();
+    if (g !== raw) g.dispose();
+    raw.dispose();
   }
+
+  const count0 = bucketPos[0].length / 3;
+  const count1 = bucketPos[1].length / 3;
+  const totalVerts = count0 + count1;
+  if (totalVerts === 0) return null;
+
+  const positions = new Float32Array(totalVerts * 3);
+  const normals   = new Float32Array(totalVerts * 3);
+  positions.set(bucketPos[0], 0);
+  positions.set(bucketPos[1], bucketPos[0].length);
+  normals.set(bucketNor[0], 0);
+  normals.set(bucketNor[1], bucketNor[0].length);
 
   const merged = new THREE.BufferGeometry();
   merged.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   merged.setAttribute('normal',   new THREE.BufferAttribute(normals, 3));
-  merged.setIndex(new THREE.BufferAttribute(indices, 1));
+  if (count0 > 0) merged.addGroup(0, count0, 0);
+  if (count1 > 0) merged.addGroup(count0, count1, 1);
+  merged.computeBoundingSphere();
   return merged;
 }
 
@@ -158,25 +185,28 @@ async function loadProceduralManifest(
 ): Promise<{ group: THREE.Group; stats: BuildingStats } | null> {
   try {
     const r = await fetch(new URL(filename, base));
-    if (!r.ok) return null;
+    if (!r.ok) {
+      console.warn(`[WuxingBuildings] ${filename} HTTP ${r.status}，尝试下一优先级数据源`);
+      return null;
+    }
     const m: WideManifest = await r.json();
 
-    // 按 heightSource 分组
     const groups: Record<HeightSource, WideEntry[]> = {
       'osm.height': [], 'osm.levels': [], 'missing': [],
     };
     for (const e of m.buildings) groups[e.heightSource]?.push(e);
 
-    // 材质：侧面 + 顶面各一个（ExtrudeGeometry group 0=side, 1=cap）
+    // Three.js ExtrudeGeometry: group 0 = 顶/底盖 (top)，group 1 = 立面 (side)
     const materials: Record<HeightSource, THREE.MeshStandardMaterial[]> = {} as never;
     for (const hs of ['osm.height', 'osm.levels', 'missing'] as HeightSource[]) {
-      const side = new THREE.MeshStandardMaterial({ color: COLORS[hs].side, roughness: 0.85, metalness: 0 });
       const top  = new THREE.MeshStandardMaterial({ color: COLORS[hs].top,  roughness: 0.85, metalness: 0 });
+      const side = new THREE.MeshStandardMaterial({ color: COLORS[hs].side, roughness: 0.85, metalness: 0 });
       if (hs === 'missing') enableMissingHeightStripes(side);
-      materials[hs] = [side, top];
+      materials[hs] = [top, side];
     }
 
     const rootGroup = new THREE.Group();
+    rootGroup.name = 'wuxing-buildings';
     const stats: BuildingStats = {
       total: 0, hasHeight: 0, hasLevels: 0, missing: 0, source: label,
     };
@@ -185,31 +215,31 @@ async function loadProceduralManifest(
       const entries = groups[hs];
       if (entries.length === 0) continue;
 
-      // 大量 missing 建筑合并几何体（提升性能）
-      if (hs === 'missing' && entries.length > 100) {
-        // 分批合并（每批 500，避免 Uint32 溢出）
-        const BATCH = 500;
+      if (hs === 'missing' && entries.length > 50) {
+        const BATCH = 1000;
         for (let bStart = 0; bStart < entries.length; bStart += BATCH) {
           const batch = entries.slice(bStart, bStart + BATCH);
           const geos: THREE.BufferGeometry[] = [];
           for (const e of batch) {
-            const g = extrudeOne(e.outline_local, e.modelHeight);
+            const g = extrudeBuildingGeometry(e.outline_local, e.modelHeight);
             if (g) geos.push(g);
           }
-          const merged = mergeGeometries(geos);
+          const merged = mergeBuildingGeometries(geos);
           if (merged) {
             const mesh = new THREE.Mesh(merged, materials[hs]);
             mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.name = `buildings-missing-batch-${bStart}`;
             rootGroup.add(mesh);
           }
         }
       } else {
-        // osm.height / osm.levels 数量少，逐个添加
         for (const e of entries) {
-          const geo = extrudeOne(e.outline_local, e.modelHeight);
+          const geo = extrudeBuildingGeometry(e.outline_local, e.modelHeight);
           if (!geo) continue;
           const mesh = new THREE.Mesh(geo, materials[hs]);
           mesh.castShadow = true;
+          mesh.receiveShadow = true;
           mesh.name = e.id;
           rootGroup.add(mesh);
         }
@@ -222,7 +252,8 @@ async function loadProceduralManifest(
     }
 
     return { group: rootGroup, stats };
-  } catch {
+  } catch (err) {
+    console.error(`[WuxingBuildings] 加载 ${filename} 失败:`, err);
     return null;
   }
 }

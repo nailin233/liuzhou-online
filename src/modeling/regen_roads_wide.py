@@ -5,7 +5,8 @@ PI=math.pi;R=6378137.0;OLAT=24.3157756;OLON=109.4086882
 def l2x(lon): return round((lon-OLON)*PI/180*R*math.cos(OLAT*PI/180),4)
 def l2z(lat): return round(-(lat-OLAT)*PI/180*R,4)
 
-CATS={'secondary':'major','tertiary':'major','secondary_link':'major','tertiary_link':'major',
+CATS={'trunk':'major','trunk_link':'major','primary':'major','primary_link':'major',
+      'secondary':'major','tertiary':'major','secondary_link':'major','tertiary_link':'major',
       'unclassified':'minor','residential':'minor','living_street':'minor','service':'service',
       'pedestrian':'pedestrian','footway':'path','cycleway':'path','steps':None,'platform':None}
 WIDTHS={'major':8,'minor':5,'service':3,'pedestrian':6,'path':2}

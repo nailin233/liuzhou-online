@@ -2,18 +2,84 @@
 * { box-sizing:border-box } body { margin:0; min-height:100vh }
 .viewport { position:fixed; inset:0; overflow:hidden }
 .viewport canvas { display:block; width:100%; height:100% }
-#reset-view { pointer-events:auto; padding:8px 14px; border:1px solid #86b9b8; border-radius:4px; background:#17232c; color:#edf4f5; font:inherit; cursor:pointer; margin-top:12px }
+#reset-view { pointer-events:auto; padding:8px 14px; min-height:34px; border:1px solid #86b9b8; border-radius:4px; background:#17232c; color:#edf4f5; font:inherit; cursor:pointer; margin-top:10px }
 #reset-view:focus-visible { outline:3px solid #8ad2c8; outline-offset:3px }
-.header { position:fixed; z-index:5; top:0; left:0; right:0; height:72px; padding:0 38px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #ffffff16; pointer-events:none }
+.header { position:fixed; z-index:5; top:0; left:0; right:0; height:64px; padding:0 32px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #ffffff16; background:rgba(16,24,32,.65); backdrop-filter:blur(6px); pointer-events:none }
 .mark { font-size:18px; letter-spacing:.16em; font-weight:800 } .dot { color:#8ad2c8 } .version { color:#8ba4b1; font-size:11px; letter-spacing:.2em }
-.panel { position:fixed; z-index:5; top:110px; left:38px; max-width:320px; pointer-events:none }
+.panel { position:fixed; z-index:5; top:84px; left:32px; max-width:330px; pointer-events:none }
 .eyebrow { color:#86b9b8; font-size:11px; letter-spacing:.26em; font-weight:700 }
-h1 { margin:14px 0; font-size:46px; line-height:1.2; font-weight:600; letter-spacing:.07em }
-.panel p { color:#afc4cb; line-height:1.8; font-size:13px } .panel strong { color:#e2efef }
-.hint { margin-top:20px; color:#7795a0!important }
+h1 { margin:10px 0; font-size:44px; line-height:1.18; font-weight:600; letter-spacing:.07em }
+.panel p { margin:8px 0; color:#afc4cb; line-height:1.7; font-size:13px } .panel strong { color:#e2efef }
+.hint { margin-top:14px !important; color:#7795a0 !important }
 kbd { display:inline-block; padding:1px 5px; border:1px solid #3e5a66; border-radius:3px; font-size:11px; color:#8ad2c8; background:#17232c }
+
+/* ── HUD / 指北针 / 图例 / 署名 ── */
+.map-compass {
+  position:fixed; top:80px; right:24px; z-index:6;
+  width:48px; height:48px; padding:0; margin:0;
+  border:none; background:transparent; border-radius:50%;
+  cursor:pointer; user-select:none; pointer-events:auto;
+  display:flex; align-items:center; justify-content:center;
+}
+.map-compass:focus-visible { outline:3px solid #8ad2c8; outline-offset:3px; }
+
+.map-hud {
+  position:fixed; bottom:18px; right:24px; z-index:5;
+  color:#86b9b8; font-size:12px; line-height:1.6;
+  background:rgba(16,24,32,.78); padding:4px 10px; border-radius:4px;
+  border:1px solid #ffffff16; pointer-events:none;
+}
+.map-hud-src { color:#9eb8c2; font-size:11px; }
+
+.map-attribution {
+  position:fixed; bottom:18px; left:20px; z-index:6;
+  color:#edf4f5; background:rgba(16,24,32,.86);
+  border:1px solid #ffffff16;
+  font-size:11px; line-height:1.4; padding:4px 8px; border-radius:4px;
+  text-decoration:none; pointer-events:auto;
+}
+.map-attribution:hover { border-color:#86b9b8; }
+
+.map-legend {
+  position:fixed; bottom:54px; left:20px; z-index:6;
+  background:rgba(16,24,32,.88); backdrop-filter:blur(6px);
+  padding:10px 14px; border-radius:6px;
+  border:1px solid #ffffff1c; font-size:12px;
+  color:#edf4f5; pointer-events:none;
+}
+.map-legend-title { font-size:11px; letter-spacing:.18em; color:#86b9b8; margin-bottom:6px; }
+.map-legend-row { display:flex; align-items:center; gap:8px; margin:3px 0; color:#afc4cb; }
+.map-legend-swatch { width:14px; height:14px; border-radius:2px; flex-shrink:0; }
+
+.map-load-error {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:20;
+  max-width:440px; padding:18px 24px; border-radius:8px;
+  background:rgba(16,24,32,.95); border:1px solid #d9549b;
+  color:#edf4f5; font-size:14px; line-height:1.6; text-align:center;
+}
+
+/* ── 移动端（≤650px）零重叠纵向布局（art-direction.md V6）── */
 @media (max-width:650px) {
-  .header { padding:0 20px }
-  .panel  { left:20px; top:100px; max-width:260px }
-  h1 { font-size:35px }
+  .header { height:52px; padding:0 14px }
+  .mark { font-size:16px }
+  .panel { top:64px; left:14px; max-width:calc(100vw - 84px) }
+  h1 { margin:6px 0; font-size:28px }
+  .panel p { margin:4px 0; font-size:12px; line-height:1.5 }
+  .hint { display:none }
+  #reset-view { margin-top:6px; padding:6px 12px; font-size:12px }
+  .map-compass { top:64px; right:14px; width:44px; height:44px }
+  .map-compass svg { width:44px; height:44px }
+  .map-attribution {
+    bottom:8px; left:10px; right:10px;
+    font-size:10px; padding:4px 7px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .map-hud {
+    bottom:38px; left:10px; right:10px;
+    font-size:11px; line-height:1.4; padding:4px 8px;
+  }
+  .map-legend {
+    bottom:96px; left:10px; right:auto;
+    padding:8px 12px; font-size:11px;
+  }
 }

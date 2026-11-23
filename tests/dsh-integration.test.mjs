@@ -23,9 +23,9 @@ test('DSH is recognized in dispatcher.mjs', () => {
 test('settings.json has DSH configuration', () => {
   const settings = JSON.parse(readFileSync(join(root, 'scripts', 'settings.json'), 'utf8'));
   strictEqual(typeof settings.maxTasksPerAgent, 'object', 'settings should have maxTasksPerAgent');
-  strictEqual(settings.maxTasksPerAgent.dsh, 2, 'DSH should allow 2 tasks per session');
+  ok(settings.maxTasksPerAgent.dsh >= 2, 'DSH should allow at least 2 tasks per session');
   strictEqual(settings.enableCodex, false, 'Codex should be disabled by default');
-  ok(settings.claudeMaxBudgetUsd > 0, 'Claude budget should be set');
+  ok(settings.claudeMaxBudgetUsd === null || settings.claudeMaxBudgetUsd > 0, 'Claude budget should be null (unlimited) or positive');
 });
 
 test('AGENTS.md documents DSH routing', () => {

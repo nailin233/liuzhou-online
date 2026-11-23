@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 param(
   [Parameter(Mandatory)][ValidateSet('claude','codex','grok','dsh')][string]$Agent,
   [Parameter(Mandatory)][string]$Worktree,
@@ -26,8 +26,11 @@ if ($Agent -eq 'codex') {
     throw 'DSH returned an empty report'
   }
 } elseif ($Agent -eq 'claude') {
-  $claudeBudget = if ($env:LIUZHOU_CLAUDE_MAX_BUDGET_USD) { $env:LIUZHOU_CLAUDE_MAX_BUDGET_USD } else { '0.75' }
-  & claude -p $promptText --permission-mode dontAsk --permission-prompts none --tools 'Read,Edit,Write,Glob,Grep' --allowedTools 'Read,Glob,Grep,Edit(./docs/**),Write(./docs/**)' --strict-mcp-config --disable-slash-commands --max-turns 18 --max-budget-usd $claudeBudget --output-format json > $LogFile 2> "$LogFile.stderr"
+  $claudeArgs = @('-p', $promptText, '--permission-mode', 'dontAsk', '--permission-prompts', 'none', '--tools', 'Read,Edit,Write,Glob,Grep', '--allowedTools', 'Read,Glob,Grep,Edit(./docs/**),Write(./docs/**)', '--strict-mcp-config', '--disable-slash-commands', '--max-turns', '50', '--output-format', 'json')
+  if ($env:LIUZHOU_CLAUDE_MAX_BUDGET_USD -and [double]$env:LIUZHOU_CLAUDE_MAX_BUDGET_USD -gt 0) {
+    $claudeArgs += @('--max-budget-usd', $env:LIUZHOU_CLAUDE_MAX_BUDGET_USD)
+  }
+  & claude @claudeArgs > $LogFile 2> "$LogFile.stderr"
   $rc = $LASTEXITCODE
   if ($rc -eq 0) {
     try {

@@ -1,16 +1,16 @@
 {
   "pollSeconds": 45,
   "maxTaskMinutes": 60,
-  "maxParallelAgents": 2,
-  "maxTasksPerSession": 4,
+  "maxParallelAgents": 3,
+  "maxTasksPerSession": 20,
   "mergeStrategy": "auto",
-  "notes": "DSH routine implementation, Claude API capped per call, Codex intentionally off until explicitly enabled. Direct edits to main and auto-merge after verification are allowed for all agents. DSH provider spending must be controlled separately at provider dashboard.",
+  "notes": "Budget and per-session caps lifted per owner request for full-sprint mode. Direct edits to main and auto-merge after verification are allowed for all agents.",
   "maxTasksPerAgent": {
-    "dsh": 2,
-    "claude": 1,
-    "grok": 1,
-    "codex": 1
+    "dsh": 10,
+    "claude": 10,
+    "grok": 10,
+    "codex": 10
   },
   "enableCodex": false,
-  "claudeMaxBudgetUsd": 0.75
+  "claudeMaxBudgetUsd": null
 }

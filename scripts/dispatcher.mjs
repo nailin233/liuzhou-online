@@ -33,7 +33,10 @@ function log(message) { console.log(`[${new Date().toISOString()}] ${message}`);
 async function invoke(command, args, { cwd = root, timeoutMs = 120000, quiet = false } = {}) {
   return new Promise((finish, reject) => {
     let stdout = '', stderr = '', timedOut = false;
-    const proc = spawn(command, args, { cwd, windowsHide: true, env: { ...process.env, LIUZHOU_CLAUDE_MAX_BUDGET_USD: String(settings.claudeMaxBudgetUsd ?? 0.75) }, shell: false });
+    const childEnv = { ...process.env };
+    if (Number(settings.claudeMaxBudgetUsd) > 0) childEnv.LIUZHOU_CLAUDE_MAX_BUDGET_USD = String(settings.claudeMaxBudgetUsd);
+    else delete childEnv.LIUZHOU_CLAUDE_MAX_BUDGET_USD;
+    const proc = spawn(command, args, { cwd, windowsHide: true, env: childEnv, shell: false });
     let timer;
     if (timeoutMs > 0) timer = setTimeout(() => {
       timedOut = true;
