@@ -243,7 +243,7 @@ async function main() {
     await git('rev-parse', '--is-inside-work-tree');
     const target = JSON.parse(await gh('repo', 'view', '--json', 'nameWithOwner,visibility,defaultBranchRef'));
     const repo = target.nameWithOwner;
-    if (repo.toLowerCase() !== 'nailin233/liuzhou-online' || target.visibility !== 'PRIVATE' || target.defaultBranchRef?.name !== 'main') throw new Error('Unexpected repository, visibility or default branch');
+    if (repo.toLowerCase() !== 'nailin233/liuzhou-online' || !['PRIVATE', 'PUBLIC'].includes(target.visibility) || target.defaultBranchRef?.name !== 'main') throw new Error('Unexpected repository, visibility or default branch');
     const login = (await gh('api', 'user', '--jq', '.login')).trim();
     log(`GitHub repository: ${repo}; operator: ${login}; mode: ${live ? 'LIVE' : 'DRY-RUN'}`);
     log(`Worktrees: ${worktreeRoot}`);
