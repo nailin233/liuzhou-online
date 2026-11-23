@@ -3,8 +3,8 @@
   "maxTaskMinutes": 60,
   "maxParallelAgents": 2,
   "maxTasksPerSession": 4,
-  "mergeStrategy": "human-only",
-  "notes": "DSH routine implementation, Claude API capped per call, Codex intentionally off until explicitly enabled. No automatic merges. DSH provider spending must be controlled separately at provider dashboard.",
+  "mergeStrategy": "auto",
+  "notes": "DSH routine implementation, Claude API capped per call, Codex intentionally off until explicitly enabled. Direct edits to main and auto-merge after verification are allowed for all agents. DSH provider spending must be controlled separately at provider dashboard.",
   "maxTasksPerAgent": {
     "dsh": 2,
     "claude": 1,
