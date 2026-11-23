@@ -11,9 +11,10 @@ export interface HUDState {
   buildingsTotal: number;
   buildingsMissing: number;
   roadsTotal: number;
-  dataSource?: string;  // 数据来源标签（如 'Overture 2891'）
+  dataSource?: string;
   mode?: 'walk' | 'overview';
   colliders?: number;
+  timeLabel?: string;
 }
 
 export interface MapHUDOptions {
@@ -65,12 +66,13 @@ export class MapHUD {
     this.legendEl.style.display = 'none'; // 默认隐藏，按 L 切换
     this.legendEl.innerHTML = `
       <div class="map-legend-title">图例</div>
-      ${this.legendRow('#C9D2D6', '建筑（实测高度）')}
+      ${this.legendRow('#DCE6EE', '建筑（实测高度 / 窗格立面）')}
       ${this.legendRow('#9FB0B8', '建筑（按层数估算）')}
       ${this.legendRow('#5C4A57', '建筑（高度缺失 · 3 m 占位）', '#D9549B')}
-      ${this.legendRow('#3A4954', '主干道 / 次干道')}
-      ${this.legendRow('#5A6B62', '步行街')}
-      ${this.legendRow('#1F4A5C', '水系（中心线示意）')}
+      ${this.legendRow('#363E46', '主干道 / 次干道（柏油标线）')}
+      ${this.legendRow('#CBBFA8', '五星街步行街（砖铺+盲道）')}
+      ${this.legendRow('#F08BB8', '柳州洋紫荆街景氛围示意')}
+      ${this.legendRow('#2F95AD', '水系（柳江中心线示意）')}
     `;
     container.appendChild(this.legendEl);
 
@@ -151,10 +153,13 @@ export class MapHUD {
   public update(state: HUDState): void {
     this.setAttributionForSource(state.dataSource);
     const missing = state.buildingsMissing > 0
-      ? `<span style="color:#D9549B">缺失高度 ${state.buildingsMissing}/${state.buildingsTotal}</span>`
+      ? `<span style="color:#F08BB8">缺失高度 ${state.buildingsMissing}/${state.buildingsTotal}</span>`
       : `建筑 ${state.buildingsTotal}`;
     const modeTag = state.mode
       ? `<span style="color:#8AD2C8">${state.mode === 'walk' ? '步行' : '鸟瞰'}</span> · `
+      : '';
+    const timeTag = state.timeLabel
+      ? `<span style="color:#E7F2A2">${state.timeLabel}</span> · `
       : '';
     const colTag = state.colliders && state.colliders > 0
       ? ` · 碰撞 ${state.colliders}`
@@ -163,9 +168,16 @@ export class MapHUD {
       ? `<span class="map-hud-src"> ${state.dataSource}</span>`
       : '';
     this.statusEl.innerHTML =
-      `${modeTag}WebGL · ${state.fps} FPS · 调用 ${state.drawCalls} · ` +
+      `${modeTag}${timeTag}WebGL · ${state.fps} FPS · 调用 ${state.drawCalls} · ` +
       `三角形 ${(state.triangles / 1000).toFixed(0)}k · ` +
       `${missing} · 道路 ${state.roadsTotal}${colTag}${src} · <kbd>L</kbd>图例`;
+  }
+
+  public setCleanMode(hidden: boolean): void {
+    const v = hidden ? 'none' : '';
+    this.statusEl.style.display = v;
+    this.compassEl.style.display = v;
+    if (hidden) this.legendEl.style.display = 'none';
   }
 
   public dispose(): void {

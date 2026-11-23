@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import { AnimeCharacter, CHARACTER_PALETTES } from '../src/AnimeCharacter.ts';
 import { PhysicsWorld, buildBuildingTrimeshBuffers } from '../src/PhysicsWorld.ts';
 import { PlayerController } from '../src/PlayerController.ts';
+import { SkyAtmosphere, ATMOSPHERE_PRESETS } from '../src/SkyAtmosphere.ts';
+import { StreetProps } from '../src/StreetProps.ts';
 
 function createMockControls() {
   return {
@@ -125,6 +127,15 @@ test('PlayerController defaults to walk mode, handles WASD/sprint/jump arc, and 
     assert.ok(afterLand.y < 0.05, `character should land back on ground, got y=${afterLand.y}`);
     assert.equal(controller.getState().grounded, true);
 
+    // 切换三视角 (C): close -> wide -> first -> close
+    assert.equal(controller.getWalkCameraPreset(), 'close');
+    assert.equal(controller.cycleWalkCameraPreset(), 'wide');
+    assert.equal(ch.root.visible, true);
+    assert.equal(controller.cycleWalkCameraPreset(), 'first');
+    assert.equal(ch.root.visible, false);
+    assert.equal(controller.cycleWalkCameraPreset(), 'close');
+    assert.equal(ch.root.visible, true);
+
     // 切换鸟瞰模式 (V)
     assert.equal(controller.toggleMode(), 'overview');
     assert.ok(camera.position.y > 500, 'overview camera should elevate to bird-eye height');
@@ -135,4 +146,34 @@ test('PlayerController defaults to walk mode, handles WASD/sprint/jump arc, and 
     ch.dispose();
     pw.dispose();
   }
+});
+
+test('SkyAtmosphere switches day/sunset/night/audit presets and StreetProps places instanced Bauhinia trees and lamps', () => {
+  const scene = new THREE.Scene();
+  const sky = new SkyAtmosphere(scene, undefined, 'day');
+  for (const id of Object.keys(ATMOSPHERE_PRESETS)) {
+    const p = sky.setPreset(id);
+    assert.equal(sky.getPresetId(), id);
+    assert.equal(p.id, id);
+  }
+  sky.update(0.016, { x: 10, z: -20 });
+  sky.dispose();
+
+  const roads = JSON.parse(
+    readFileSync(new URL('../public/models/wuxing-street/roads.json', import.meta.url), 'utf8'),
+  ).roads;
+  const footprints = JSON.parse(
+    readFileSync(new URL('../public/models/wuxing-street/manifest-overture.json', import.meta.url), 'utf8'),
+  ).buildings;
+
+  const props = new StreetProps(roads, footprints);
+  const stats = props.getStats();
+  assert.ok(stats.trees >= 100, `expected >=100 street trees, got ${stats.trees}`);
+  assert.ok(stats.lamps >= 30, `expected >=30 street lamps, got ${stats.lamps}`);
+  assert.ok(props.group.children.length <= 5, `InstancedMesh props must use <=5 draw calls, got ${props.group.children.length}`);
+  props.setAtmosphere(1.0, true);
+  assert.equal(props.group.visible, true);
+  props.setAtmosphere(0.0, false);
+  assert.equal(props.group.visible, false);
+  props.dispose();
 });

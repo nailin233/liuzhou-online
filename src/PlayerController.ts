@@ -14,6 +14,7 @@ import type { AnimeCharacter } from './AnimeCharacter';
 import type { PhysicsWorld } from './PhysicsWorld';
 
 export type CameraMode = 'walk' | 'overview';
+export type WalkCameraPreset = 'close' | 'wide' | 'first';
 
 export interface PlayerInputState {
   forward:  boolean;
@@ -56,6 +57,7 @@ export class PlayerController {
   private readonly onModeChange?: (mode: CameraMode) => void;
 
   private mode: CameraMode = 'walk';
+  private walkPreset: WalkCameraPreset = 'close';
   private verticalVel = 0;
   private grounded = true;
   private currentYaw = Math.PI; // 初始朝向正北 (-Z)
@@ -121,6 +123,14 @@ export class PlayerController {
         this.toggleMode();
         return;
       }
+      if (e.code === 'KeyC' && !e.repeat && this.mode === 'walk') {
+        this.cycleWalkCameraPreset();
+        return;
+      }
+      if (e.code === 'KeyR' && !e.repeat) {
+        this.reset();
+        return;
+      }
       mapCode(e.code, true, e);
     };
     this.onKeyUp = (e: KeyboardEvent) => {
@@ -152,6 +162,46 @@ export class PlayerController {
     return next;
   }
 
+  public getWalkCameraPreset(): WalkCameraPreset {
+    return this.walkPreset;
+  }
+
+  /** C 键循环切换：近景第三人称 -> 远景第三人称 -> 第一人称漫步 */
+  public cycleWalkCameraPreset(): WalkCameraPreset {
+    const order: WalkCameraPreset[] = ['close', 'wide', 'first'];
+    const next = order[(order.indexOf(this.walkPreset) + 1) % order.length];
+    this.walkPreset = next;
+    if (this.mode === 'walk') {
+      this.applyWalkCameraPreset();
+    }
+    return next;
+  }
+
+  private applyWalkCameraPreset(): void {
+    const pos = this.physics.getFootPosition();
+    const backX = -Math.sin(this.currentYaw);
+    const backZ = -Math.cos(this.currentYaw);
+    this.controls.enableDamping = false;
+
+    if (this.walkPreset === 'first') {
+      this.character.root.visible = false;
+      this.controls.minDistance = 0.2;
+      this.controls.maxDistance = 0.6;
+      this.controls.target.set(pos.x - backX * 0.4, pos.y + 1.56, pos.z - backZ * 0.4);
+      this.camera.position.set(pos.x, pos.y + 1.58, pos.z);
+    } else {
+      this.character.root.visible = true;
+      const dist = this.walkPreset === 'wide' ? 8.2 : 5.0;
+      const height = this.walkPreset === 'wide' ? 4.2 : 2.75;
+      this.controls.minDistance = 2.6;
+      this.controls.maxDistance = 18;
+      this.controls.target.set(pos.x, pos.y + TARGET_EYE_HEIGHT, pos.z);
+      this.camera.position.set(pos.x + backX * dist, pos.y + height, pos.z + backZ * dist);
+    }
+    this.controls.update();
+    this.controls.enableDamping = true;
+  }
+
   public setMode(mode: CameraMode, immediate = false): void {
     this.mode = mode;
     const pos = this.physics.getFootPosition();
@@ -159,17 +209,11 @@ export class PlayerController {
 
     if (mode === 'walk') {
       this.controls.enablePan = false;
-      this.controls.minDistance = 2.8;
-      this.controls.maxDistance = 18;
       this.controls.maxPolarAngle = Math.PI / 2 - 0.06;
       this.controls.minPolarAngle = 0.22;
-
-      this.controls.target.set(pos.x, pos.y + TARGET_EYE_HEIGHT, pos.z);
-      // 放在角色背后上方（默认角色朝北 -Z，相机在 +Z 南侧，上北右东）
-      const backX = -Math.sin(this.currentYaw) * 6.0;
-      const backZ = -Math.cos(this.currentYaw) * 6.0;
-      this.camera.position.set(pos.x + backX, pos.y + 3.2, pos.z + backZ);
+      this.applyWalkCameraPreset();
     } else {
+      this.character.root.visible = true;
       this.controls.enablePan = true;
       this.controls.minDistance = 40;
       this.controls.maxDistance = 2800;

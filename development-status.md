@@ -23,6 +23,15 @@
 - [x] Rapier 3D 物理碰撞（[PhysicsWorld.ts](src/PhysicsWorld.ts)：`@dimforge/rapier3d-compat` 地面静态碰撞体 + 2891 栋建筑精确多边形外墙/屋顶 Trimesh BVH + `KinematicCharacterController` 贴墙滑动与重力落地）
 - [x] **58/58** 自动化测试通过（Linux + Windows 双环境）+ `tsc --noEmit` + `vite build` + 浏览器实机复验通过（**180 FPS**、**Draw Calls 100** `< 200`、0 报错、桌面 1280×800 与移动端 375×667 零重叠）
 
+## Milestone 2+: 都市昼夜画风与柳州紫荆花街景升级（Phase A）✅（已实机验收通过）
+
+- [x] 24H 动态天空穹顶、低模白云与太阳阴影跟随（[SkyAtmosphere.ts](src/SkyAtmosphere.ts)：`晴日 10:25` / `日落 17:55` / `夜景 21:30` / `数据检视 AUDIT` 一键切换）
+- [x] 双模式程序化建筑立面（[WuxingBuildings.ts](src/WuxingBuildings.ts)：都市窗格/层线/夜间随机暖灯，切「数据检视」瞬时还原洋红缺失斜纹）
+- [x] 道路沿线 UV 着色（[RoadNetwork.ts](src/RoadNetwork.ts)：主干道柏油白色虚线与路缘、五星街暖石砖铺装 + 黄色盲道条带）
+- [x] 柳州洋紫荆（粉花冠）与常绿行道树 + 夜间发光路灯（[StreetProps.ts](src/StreetProps.ts)：全 `InstancedMesh` 合批仅 5 Draw Calls）
+- [x] `C` 三视角切换（近/远第三人称 + 第一人称）、`R` 脱困、`H` 一键纯净录屏模式（抖音拍片专用）与磨砂玻璃 HUD（点击按钮不抢 `WASD` 焦点）
+- [x] **59/59** 自动化测试通过、`tsc --noEmit` & `vite build` 通过、浏览器实机 **179 FPS / Draw Calls 108 / 0 报错 / 桌面与 375×667 移动端 0 重叠**
+
 ## Milestone 3: 车辆系统 (下一步 — 可正式启动)
 - [ ] 电动自行车 / 小汽车载具模型与物理驾驶
 - [ ] 角色上车 / 下车无缝切换

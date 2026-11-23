@@ -1,18 +1,18 @@
 /**
- * WaterNetwork — 从 waterways.json 加载柳江等水系
- * art-direction.md §2.1: 水体 #1F4A5C, roughness=0.35
+ * WaterNetwork — 从 waterways.json 加载柳江等水系，支持昼夜水色联动
  *
  * 坐标系：+X 东 / +Y 上 / +Z 南
- * 层高：y = 0.015（高于地面 0.005 与网格 0.010，低于道路 0.024–0.042）
+ * 层高：y = 0.016（高于地面 0.005 与网格 0.010，低于道路 0.024–0.042）
  */
 import * as THREE from 'three';
+import type { AtmospherePresetId } from './SkyAtmosphere';
 
 interface WaterwayEntry {
   id: string;
   name: string;
-  type: string;    // 'river' | 'water'
+  type: string;
   closed: boolean;
-  points: [number, number][];  // [x(东), z(南)] 本地坐标
+  points: [number, number][];
   width: number;
 }
 
@@ -21,9 +21,23 @@ interface WaterManifest {
   waterways: WaterwayEntry[];
 }
 
-const WATER_COLOR   = 0x1F4A5C;
-const WATER_ROUGH   = 0.35;
-const RIVER_DEFAULT = 50;  // 默认河宽 (m)，仅作中心线示意
+export interface WaterStyleController {
+  setPreset(preset: AtmospherePresetId): void;
+}
+
+export interface LoadWaterResult {
+  group:           THREE.Group;
+  styleController: WaterStyleController;
+}
+
+const WATER_PALETTE: Record<AtmospherePresetId, { color: number; roughness: number }> = {
+  day:    { color: 0x2F95AD, roughness: 0.22 },
+  sunset: { color: 0x4E7A8D, roughness: 0.24 },
+  night:  { color: 0x132E45, roughness: 0.20 },
+  audit:  { color: 0x1F4A5C, roughness: 0.35 },
+};
+
+const RIVER_DEFAULT = 50;
 export const WATER_ELEVATION = 0.016;
 
 /** 将河流中心线折线转为法线朝 +Y 的条带几何体 */
@@ -60,7 +74,6 @@ export function buildRiverStripGeometry(
 
     if (i > 0) {
       const b = (i - 1) * 2;
-      // 朝 +Y 向上法线绕序：(b, b+2, b+1) 与 (b+1, b+2, b+3)
       indices.push(b, b + 2, b + 1, b + 1, b + 2, b + 3);
     }
   }
@@ -73,10 +86,7 @@ export function buildRiverStripGeometry(
   return geo;
 }
 
-/**
- * 将闭合水体轮廓（[east(x), south(z)]）转为 XZ 平面面几何体（法线朝 +Y）。
- * Shape 传入 (x, -z)，经 rotateX(-π/2) 后保持 (x, 0, +z)，无南北镜像。
- */
+/** 将闭合水体轮廓（[east(x), south(z)]）转为 XZ 平面面几何体（法线朝 +Y） */
 export function buildWaterPolygonGeometry(
   rawPoints: [number, number][],
 ): THREE.BufferGeometry | null {
@@ -100,16 +110,16 @@ export function buildWaterPolygonGeometry(
   return geo;
 }
 
-export async function loadWaterNetwork(): Promise<THREE.Group> {
+export async function loadWaterNetwork(): Promise<LoadWaterResult> {
   const base = new URL(import.meta.env.BASE_URL + 'models/wuxing-street/', document.baseURI);
   const response = await fetch(new URL('waterways.json', base));
   if (!response.ok) throw new Error(`waterways.json · HTTP ${response.status}`);
   const manifest: WaterManifest = await response.json();
 
   const mat = new THREE.MeshStandardMaterial({
-    color: WATER_COLOR,
-    roughness: WATER_ROUGH,
-    metalness: 0,
+    color: WATER_PALETTE.day.color,
+    roughness: WATER_PALETTE.day.roughness,
+    metalness: 0.08,
     polygonOffset: true,
     polygonOffsetFactor: -0.5,
     polygonOffsetUnits: -0.5,
@@ -137,7 +147,15 @@ export async function loadWaterNetwork(): Promise<THREE.Group> {
     }
   }
 
-  return group;
+  const styleController: WaterStyleController = {
+    setPreset(preset: AtmospherePresetId) {
+      const p = WATER_PALETTE[preset] ?? WATER_PALETTE.day;
+      mat.color.setHex(p.color);
+      mat.roughness = p.roughness;
+    },
+  };
+
+  return { group, styleController };
 }
 
 export function disposeWater(group: THREE.Group): void {
