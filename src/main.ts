@@ -5,6 +5,8 @@ import { SkyAtmosphere, ATMOSPHERE_PRESETS, type AtmospherePresetId } from './Sk
 import { loadWuxingBuildings, disposeBuildings, type BuildingStyleController } from './WuxingBuildings';
 import { loadRoadNetwork, disposeRoads, type RoadStyleController } from './RoadNetwork';
 import { loadWaterNetwork, disposeWater, type WaterStyleController } from './WaterNetwork';
+import { loadLanduseLayer, disposeLanduse, type LanduseStyleController } from './LanduseLayer';
+import { loadLandmarksAndSigns, disposeLandmarks, type LandmarksController } from './LandmarksAndSigns';
 import { createMapGround } from './MapGround';
 import { StreetProps } from './StreetProps';
 import { MapHUD } from './MapHUD';
@@ -33,12 +35,12 @@ const atmosphereButtonsHtml = Object.values(ATMOSPHERE_PRESETS)
 app.innerHTML = `
   <header class="header" id="main-header">
     <span class="mark">LZ<span class="dot">.</span>OL</span>
-    <span class="version">M02+ · 五星街晴日漫游</span>
+    <span class="version">M02+ · 柳州五星街实景漫游</span>
   </header>
   <section class="panel" id="main-panel">
     <div class="eyebrow">LIUZHOU ONLINE</div>
     <h1>网上柳州</h1>
-    <p>五星街真实地理轮廓（Overture + OpenStreetMap）；行道洋紫荆与窗格为街景氛围示意，切「数据检视」可查缺失高度。</p>
+    <p>基于真实地理轮廓（Overture + OpenStreetMap）与 85 栋具名地标、柳侯公园、真实路牌；漫游楼高按业态/面积风格化呈现，切「数据检视」核查实测与 3 m 缺失占位。</p>
     <p class="hint"><kbd>WASD</kbd> 移动 · <kbd>Shift</kbd> 奔跑 · <kbd>Space</kbd> 跳跃 · <kbd>C</kbd> 三视角 · <kbd>V</kbd> 鸟瞰 · <kbd>H</kbd> 纯净录屏 · <kbd>R</kbd> 脱困</p>
     <div class="panel-actions">
       <button id="toggle-mode" class="action-btn primary" type="button">切换鸟瞰 [V]</button>
@@ -76,6 +78,8 @@ let streetProps: StreetProps | null = null;
 let buildingStyle: BuildingStyleController | null = null;
 let roadStyle: RoadStyleController | null = null;
 let waterStyle: WaterStyleController | null = null;
+let landuseStyle: LanduseStyleController | null = null;
+let landmarksCtrl: LandmarksController | null = null;
 let currentMode: CameraMode = 'walk';
 let currentAtmo: AtmospherePresetId = 'day';
 let cleanMode = false;
@@ -102,7 +106,9 @@ function applyAtmosphere(id: AtmospherePresetId): void {
   buildingStyle?.setVisualMode(isAudit, preset.nightGlow);
   roadStyle?.setVisualMode(isAudit);
   waterStyle?.setPreset(id);
+  landuseStyle?.setPreset(id);
   streetProps?.setAtmosphere(preset.nightGlow, !isAudit);
+  landmarksCtrl?.setVisible(!isAudit, !cleanMode);
 
   for (const b of atmoBtns) {
     const active = b.dataset.atmo === id;
@@ -117,6 +123,7 @@ function setCleanMode(hidden: boolean): void {
   panelEl.style.display  = hidden ? 'none' : '';
   cleanRestoreEl.style.display = hidden ? 'block' : 'none';
   hud.setCleanMode(hidden);
+  landmarksCtrl?.setVisible(currentAtmo !== 'audit', !hidden);
 }
 
 function orientNorth(): void {
@@ -190,11 +197,13 @@ const onKeyDown = (e: KeyboardEvent) => {
 };
 document.addEventListener('keydown', onKeyDown);
 
-// ── 异步初始化 Rapier 物理 + 地图数据 + 柳州洋紫荆街景 ──────────────────────────
+// ── 异步初始化 Rapier 物理 + 地图数据 + 柳州公园/地标/洋紫荆街景 ────────────────
 let disposed = false;
-let buildingGroup: THREE.Group | null = null;
-let roadGroup:     THREE.Group | null = null;
-let waterGroup:    THREE.Group | null = null;
+let buildingGroup:  THREE.Group | null = null;
+let roadGroup:      THREE.Group | null = null;
+let waterGroup:     THREE.Group | null = null;
+let landuseGroup:   THREE.Group | null = null;
+let landmarksGroup: THREE.Group | null = null;
 let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0, _dataSource = '';
 
 (async () => {
@@ -216,36 +225,45 @@ let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0, _dataSource = '';
     });
     updateModeButton(player.getMode());
 
-    const [buildResult, roadResult, waterResult] = await Promise.all([
+    const [buildResult, roadResult, waterResult, landuseResult, landmarksResult] = await Promise.all([
       loadWuxingBuildings(),
       loadRoadNetwork(),
       loadWaterNetwork(),
+      loadLanduseLayer(),
+      loadLandmarksAndSigns(),
     ]);
     if (disposed) {
       disposeBuildings(buildResult.group);
       disposeRoads(roadResult.group);
       disposeWater(waterResult.group);
+      disposeLanduse(landuseResult.group);
+      disposeLandmarks(landmarksResult.group);
       return;
     }
 
-    buildingGroup = buildResult.group;
-    roadGroup     = roadResult.group;
-    waterGroup    = waterResult.group;
+    buildingGroup  = buildResult.group;
+    roadGroup      = roadResult.group;
+    waterGroup     = waterResult.group;
+    landuseGroup   = landuseResult.group;
+    landmarksGroup = landmarksResult.group;
+
     buildingStyle = buildResult.styleController;
     roadStyle     = roadResult.styleController;
     waterStyle    = waterResult.styleController;
+    landuseStyle  = landuseResult.styleController;
+    landmarksCtrl = landmarksResult.controller;
 
     buildingGroup.traverse(o => { if (o instanceof THREE.Mesh) o.castShadow = true; });
-    scene.add(buildingGroup, roadGroup, waterGroup);
+    scene.add(landuseGroup, buildingGroup, roadGroup, waterGroup, landmarksGroup);
 
-    // 沿真实 OSM 道路边缘铺设柳州洋紫荆行道树与路灯（InstancedMesh 仅 5 Draw Calls）
+    // 沿真实 OSM 道路铺设饱满洋紫荆花树、绿荫树、路灯、蓝白隔离护栏与路口斑马线
     streetProps = new StreetProps(roadResult.roads, buildResult.footprints);
     scene.add(streetProps.group);
 
-    // 注册 2891 栋建筑碰撞体到 Rapier
+    // 注册 2891 栋建筑精确多边形碰撞体到 Rapier
     colliderCount = pw.setBuildingColliders(buildResult.footprints);
 
-    // 同步当前昼夜氛围到刚加载的图层
+    // 同步当前昼夜氛围到全部图层
     applyAtmosphere(currentAtmo);
 
     buildingsTotal   = buildResult.stats.total;
@@ -266,6 +284,7 @@ scene.startRendering((delta) => {
   player?.update(delta);
   const focus = player ? player.getPosition() : { x: scene.controls.target.x, z: scene.controls.target.z };
   atmosphere.update(delta, focus);
+  landmarksCtrl?.update(scene.camera.position);
   hud.updateCompass(scene.camera, scene.controls);
 
   frames++;
@@ -300,9 +319,11 @@ if (import.meta.hot) {
     character.dispose();
     streetProps?.dispose();
     atmosphere.dispose();
-    if (buildingGroup) disposeBuildings(buildingGroup);
-    if (roadGroup)     disposeRoads(roadGroup);
-    if (waterGroup)    disposeWater(waterGroup);
+    if (buildingGroup)  disposeBuildings(buildingGroup);
+    if (roadGroup)      disposeRoads(roadGroup);
+    if (waterGroup)     disposeWater(waterGroup);
+    if (landuseGroup)   disposeLanduse(landuseGroup);
+    if (landmarksGroup) disposeLandmarks(landmarksGroup);
     hud.dispose();
     scene.dispose();
   });

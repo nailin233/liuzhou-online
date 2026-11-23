@@ -7,6 +7,7 @@ import { PhysicsWorld, buildBuildingTrimeshBuffers } from '../src/PhysicsWorld.t
 import { PlayerController } from '../src/PlayerController.ts';
 import { SkyAtmosphere, ATMOSPHERE_PRESETS } from '../src/SkyAtmosphere.ts';
 import { StreetProps } from '../src/StreetProps.ts';
+import { computeStylizedCityHeight } from '../src/WuxingBuildings.ts';
 
 function createMockControls() {
   return {
@@ -170,10 +171,31 @@ test('SkyAtmosphere switches day/sunset/night/audit presets and StreetProps plac
   const stats = props.getStats();
   assert.ok(stats.trees >= 100, `expected >=100 street trees, got ${stats.trees}`);
   assert.ok(stats.lamps >= 30, `expected >=30 street lamps, got ${stats.lamps}`);
-  assert.ok(props.group.children.length <= 5, `InstancedMesh props must use <=5 draw calls, got ${props.group.children.length}`);
+  assert.ok(stats.rails >= 50, `expected >=50 traffic guardrails, got ${stats.rails}`);
+  assert.ok(stats.crosswalks >= 10, `expected >=10 zebra crosswalks, got ${stats.crosswalks}`);
+  assert.ok(props.group.children.length <= 8, `InstancedMesh props must use <=8 draw calls, got ${props.group.children.length}`);
   props.setAtmosphere(1.0, true);
   assert.equal(props.group.visible, true);
   props.setAtmosphere(0.0, false);
   assert.equal(props.group.visible, false);
   props.dispose();
+
+  // 校验多层城建楼高估算：实测保留原值，具名大厦生成合理多层高度
+  assert.equal(computeStylizedCityHeight({
+    id: 'diwang', tags: { name: '地王国际财富中心' }, outline_local: [[0,0],[40,0],[40,40],[0,40]],
+    heightSource: 'osm.height', modelHeight: 311,
+  }), 311);
+  const towerH = computeStylizedCityHeight({
+    id: 'way/205654183', tags: { name: '华侨大厦', building: 'commercial' },
+    outline_local: [[0,0],[30,0],[30,30],[0,30]], heightSource: 'missing', modelHeight: 3,
+  });
+  assert.ok(towerH >= 24 && towerH <= 60, `named tower should generate multi-story city height, got ${towerH}`);
+
+  // 校验真实柳州 landuse.json 与 landmarks.json 资产存在且具 ODbL 署名
+  const landuse = JSON.parse(readFileSync(new URL('../public/models/wuxing-street/landuse.json', import.meta.url), 'utf8'));
+  const landmarks = JSON.parse(readFileSync(new URL('../public/models/wuxing-street/landmarks.json', import.meta.url), 'utf8'));
+  assert.ok(landuse.license.includes('ODbL'));
+  assert.ok(landuse.areas.length >= 40, `expected >=40 landuse areas, got ${landuse.areas.length}`);
+  assert.ok(landmarks.landmarks.length >= 20, `expected >=20 landmarks, got ${landmarks.landmarks.length}`);
+  assert.ok(landmarks.streetSigns.some(s => s.name === '五星街'), 'must include 五星街 real street sign');
 });

@@ -1,11 +1,13 @@
 /**
- * StreetProps — 柳州特色街景氛围道具（纯 InstancedMesh 合批，总计仅 5 次 Draw Call）
+ * StreetProps — 柳州高密度街景细节（全 InstancedMesh 合批，总计最多 7 次 Draw Call）
  *
- * 内容（沿真实 OSM 道路边缘确定性排布，避开建筑轮廓）：
- *  - 柳州城市名片：洋紫荆（紫荆花）粉花行道树 + 亚热带常绿行道树
- *  - 现代简约路灯（日落/夜景自动点亮暖黄灯光）
- *
- * 注：属于街景视觉氛围示意，切换至「数据检视」模式时自动隐藏以展示纯地理白模。
+ * 包含（沿真实 OSM 道路确定性排布并避开建筑轮廓）：
+ *  1. 树干（1 Draw Call）
+ *  2. 柳州名片：三簇饱满粉花洋紫荆花冠（1 Draw Call）
+ *  3. 三簇亚热带常绿行道树冠（1 Draw Call）
+ *  4. 街灯灯杆 + 夜间发光灯头（2 Draw Calls）
+ *  5. 广西街头标志性蓝白机非隔离护栏（沿主干道，1 Draw Call）
+ *  6. 主/次干道路口白色人行横道斑马线（1 Draw Call）
  */
 import * as THREE from 'three';
 import type { RoadEntry } from './RoadNetwork';
@@ -25,7 +27,93 @@ interface LampPlacement {
   yaw: number;
 }
 
-/** 轻量级空间网格：快速剔除落在建筑轮廓附近（避免树或路灯穿模进楼体） */
+interface RailPlacement {
+  x: number;
+  z: number;
+  yaw: number;
+}
+
+interface CrosswalkPlacement {
+  x: number;
+  z: number;
+  yaw: number;
+  width: number;
+}
+
+/** 将多个非索引几何体合并为一个单 Draw Call 的雕塑感树冠几何体 */
+function mergeSimpleGeometries(parts: THREE.BufferGeometry[]): THREE.BufferGeometry {
+  const posList: number[] = [];
+  const norList: number[] = [];
+  for (const raw of parts) {
+    const g = raw.index ? raw.toNonIndexed() : raw;
+    const pos = g.getAttribute('position') as THREE.BufferAttribute;
+    const nor = g.getAttribute('normal') as THREE.BufferAttribute;
+    for (let i = 0; i < pos.count; i++) {
+      posList.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+      norList.push(nor ? nor.getX(i) : 0, nor ? nor.getY(i) : 1, nor ? nor.getZ(i) : 0);
+    }
+    if (g !== raw) g.dispose();
+    raw.dispose();
+  }
+  const merged = new THREE.BufferGeometry();
+  merged.setAttribute('position', new THREE.Float32BufferAttribute(posList, 3));
+  merged.setAttribute('normal',   new THREE.Float32BufferAttribute(norList, 3));
+  merged.computeBoundingSphere();
+  return merged;
+}
+
+/** 构造三簇错落有致的饱满树冠（洋紫荆 / 常绿树共用结构，仅 1 Draw Call） */
+function createLushCanopyGeometry(baseRadius: number): THREE.BufferGeometry {
+  const p1 = new THREE.DodecahedronGeometry(baseRadius, 1);
+  p1.scale(1.15, 0.78, 1.08);
+  p1.translate(0, 3.85, 0);
+
+  const p2 = new THREE.DodecahedronGeometry(baseRadius * 0.76, 1);
+  p2.scale(1.1, 0.75, 1.0);
+  p2.translate(baseRadius * 0.58, 3.35, baseRadius * 0.25);
+
+  const p3 = new THREE.DodecahedronGeometry(baseRadius * 0.72, 1);
+  p3.scale(1.05, 0.76, 1.1);
+  p3.translate(-baseRadius * 0.52, 3.45, -baseRadius * 0.30);
+
+  return mergeSimpleGeometries([p1, p2, p3]);
+}
+
+/** 构造 1 段 3.2m 蓝白隔离护栏（合并栏杆与立柱为 1 个几何体） */
+function createGuardrailGeometry(): THREE.BufferGeometry {
+  const parts: THREE.BufferGeometry[] = [];
+  const topBar = new THREE.BoxGeometry(0.10, 0.08, 3.15);
+  topBar.translate(0, 0.92, 0);
+  parts.push(topBar);
+
+  const midBar = new THREE.BoxGeometry(0.08, 0.22, 3.10);
+  midBar.translate(0, 0.56, 0);
+  parts.push(midBar);
+
+  const botBar = new THREE.BoxGeometry(0.08, 0.06, 3.15);
+  botBar.translate(0, 0.22, 0);
+  parts.push(botBar);
+
+  for (const pz of [-1.45, 0, 1.45]) {
+    const post = new THREE.BoxGeometry(0.12, 0.98, 0.12);
+    post.translate(0, 0.49, pz);
+    parts.push(post);
+  }
+  return mergeSimpleGeometries(parts);
+}
+
+/** 构造一条人行横道斑马线（6 条平行白条合为 1 个几何体） */
+function createCrosswalkGeometry(): THREE.BufferGeometry {
+  const parts: THREE.BufferGeometry[] = [];
+  for (let i = -2.5; i <= 2.5; i += 1.0) {
+    const stripe = new THREE.PlaneGeometry(0.55, 2.8);
+    stripe.rotateX(-Math.PI / 2);
+    stripe.translate(i * 1.05, 0.048, 0);
+    parts.push(stripe);
+  }
+  return mergeSimpleGeometries(parts);
+}
+
 class BuildingFootprintIndex {
   private readonly cellSize = 40;
   private readonly cells = new Map<string, [number, number, number, number][]>();
@@ -40,8 +128,7 @@ class BuildingFootprintIndex {
         if (z < minZ) minZ = z;
         if (z > maxZ) maxZ = z;
       }
-      // 外扩 1.4 m 缓冲距
-      const box: [number, number, number, number] = [minX - 1.4, maxX + 1.4, minZ - 1.4, maxZ + 1.4];
+      const box: [number, number, number, number] = [minX - 1.5, maxX + 1.5, minZ - 1.5, maxZ + 1.5];
       const cx0 = Math.floor(box[0] / this.cellSize);
       const cx1 = Math.floor(box[1] / this.cellSize);
       const cz0 = Math.floor(box[2] / this.cellSize);
@@ -73,6 +160,8 @@ export class StreetProps {
   private lampHeadMat: THREE.MeshStandardMaterial;
   private treeCount = 0;
   private lampCount = 0;
+  private railCount = 0;
+  private crosswalkCount = 0;
 
   constructor(roads: RoadEntry[], footprints: BuildingColliderData[]) {
     this.group = new THREE.Group();
@@ -81,14 +170,18 @@ export class StreetProps {
     const bIndex = new BuildingFootprintIndex(footprints);
     const trees: PropPlacement[] = [];
     const lamps: LampPlacement[] = [];
+    const rails: RailPlacement[] = [];
+    const crosswalks: CrosswalkPlacement[] = [];
     const occupied = new Set<string>();
+    const crosswalkCells = new Set<string>();
 
-    // 在核心漫游区 (±700m) 沿主干道、次干道与步行街生成行道树与路灯
-    const MAX_RANGE = 700;
-    const MAX_TREES = 480;
-    const MAX_LAMPS = 220;
+    const MAX_RANGE = 750;
+    const MAX_TREES = 540;
+    const MAX_LAMPS = 240;
+    const MAX_RAILS = 420;
+    const MAX_CROSSWALKS = 65;
 
-    let seed = 1;
+    let seed = 7;
     const nextHash = () => {
       seed = (seed * 1664525 + 1013904223) >>> 0;
       return seed / 0x100000000;
@@ -96,9 +189,9 @@ export class StreetProps {
 
     for (const road of roads) {
       if (road.category !== 'major' && road.category !== 'pedestrian' && road.category !== 'minor') continue;
-      const spacing = road.category === 'pedestrian' ? 14 : road.category === 'major' ? 18 : 24;
-      const offsetDist = road.width / 2 + 1.35;
-      let accum = spacing * 0.4;
+      const spacing = road.category === 'pedestrian' ? 12 : road.category === 'major' ? 16 : 22;
+      const offsetDist = road.width / 2 + 1.45;
+      let accum = spacing * 0.35;
 
       for (let i = 0; i < road.points.length - 1; i++) {
         const [x1, z1] = road.points[i];
@@ -109,12 +202,37 @@ export class StreetProps {
         const dx = x2 - x1;
         const dz = z2 - z1;
         const segLen = Math.hypot(dx, dz);
-        if (segLen < 1) continue;
+        if (segLen < 1.2) continue;
         const ux = dx / segLen;
         const uz = dz / segLen;
         const nx = -uz;
         const nz = ux;
         const yaw = Math.atan2(ux, uz);
+
+        // 主干道两侧布置蓝白机非隔离护栏（中段，避开路口前后 6m）
+        if (road.category === 'major' && segLen > 16 && rails.length < MAX_RAILS) {
+          const railOff = road.width / 2 - 0.15;
+          for (let rd = 7.0; rd < segLen - 7.0 && rails.length < MAX_RAILS; rd += 3.6) {
+            const rx = x1 + ux * rd;
+            const rz = z1 + uz * rd;
+            if (Math.abs(rx) > 550 || Math.abs(rz) > 550) continue;
+            for (const side of [-1, 1]) {
+              if (rails.length >= MAX_RAILS) break;
+              rails.push({ x: rx + nx * railOff * side, z: rz + nz * railOff * side, yaw });
+            }
+          }
+        }
+
+        // 主干道端点附近布置白色斑马线
+        if (road.category === 'major' && segLen > 14 && crosswalks.length < MAX_CROSSWALKS) {
+          const cwX = x1 + ux * 4.5;
+          const cwZ = z1 + uz * 4.5;
+          const cwKey = `${Math.round(cwX / 24)},${Math.round(cwZ / 24)}`;
+          if (Math.abs(cwX) < 650 && Math.abs(cwZ) < 650 && !crosswalkCells.has(cwKey)) {
+            crosswalkCells.add(cwKey);
+            crosswalks.push({ x: cwX, z: cwZ, yaw, width: road.width });
+          }
+        }
 
         let d = accum;
         while (d < segLen) {
@@ -125,26 +243,25 @@ export class StreetProps {
             const tx = px + nx * offsetDist * side;
             const tz = pz + nz * offsetDist * side;
             if (Math.abs(tx) > MAX_RANGE || Math.abs(tz) > MAX_RANGE) continue;
-            // 出生点周围 6m 保持开阔视野
-            if (Math.hypot(tx, tz) < 6.0) continue;
+            if (Math.hypot(tx, tz) < 5.5) continue;
 
-            const cellKey = `${Math.round(tx / 7)},${Math.round(tz / 7)}`;
+            const cellKey = `${Math.round(tx / 6.5)},${Math.round(tz / 6.5)}`;
             if (occupied.has(cellKey)) continue;
             if (bIndex.isNearBuilding(tx, tz)) continue;
 
             occupied.add(cellKey);
             const r = nextHash();
 
-            if (lamps.length < MAX_LAMPS && r < 0.30) {
+            if (lamps.length < MAX_LAMPS && r < 0.28) {
               lamps.push({ x: tx, z: tz, yaw: yaw + (side > 0 ? Math.PI / 2 : -Math.PI / 2) });
             } else if (trees.length < MAX_TREES) {
-              // 约 48% 为柳州特色粉花洋紫荆，52% 为常绿行道树
+              // 52% 为柳州洋紫荆粉花树，48% 为亚热带绿荫树
               trees.push({
                 x: tx,
                 z: tz,
                 yaw: r * Math.PI * 2,
-                scale: 0.85 + nextHash() * 0.42,
-                isBauhinia: nextHash() < 0.48,
+                scale: 0.88 + nextHash() * 0.44,
+                isBauhinia: nextHash() < 0.52,
               });
             }
           }
@@ -156,14 +273,16 @@ export class StreetProps {
 
     this.treeCount = trees.length;
     this.lampCount = lamps.length;
+    this.railCount = rails.length;
+    this.crosswalkCount = crosswalks.length;
 
     const dummy = new THREE.Object3D();
 
-    // 1. 树干（合并所有树，1 Draw Call）
+    // 1. 树干（1 Draw Call）
     if (trees.length > 0) {
-      const trunkGeo = new THREE.CylinderGeometry(0.14, 0.22, 2.8, 6);
-      trunkGeo.translate(0, 1.4, 0);
-      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5C4638, roughness: 0.92, metalness: 0 });
+      const trunkGeo = new THREE.CylinderGeometry(0.15, 0.24, 3.0, 6);
+      trunkGeo.translate(0, 1.5, 0);
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5B4435, roughness: 0.92, metalness: 0 });
       const trunkMesh = new THREE.InstancedMesh(trunkGeo, trunkMat, trees.length);
       trunkMesh.castShadow = true;
       trunkMesh.receiveShadow = true;
@@ -182,12 +301,10 @@ export class StreetProps {
       trunkMesh.instanceMatrix.needsUpdate = true;
       this.group.add(trunkMesh);
 
-      // 2. 柳州洋紫荆（粉花冠，1 Draw Call）
+      // 2. 柳州洋紫荆饱满三簇粉花冠（1 Draw Call）
       if (pinkTrees.length > 0) {
-        const pinkGeo = new THREE.DodecahedronGeometry(1.75, 1);
-        pinkGeo.scale(1.12, 0.82, 1.05);
-        pinkGeo.translate(0, 3.65, 0);
-        const pinkMat = new THREE.MeshStandardMaterial({ color: 0xF08BB8, roughness: 0.78, metalness: 0 });
+        const pinkGeo = createLushCanopyGeometry(1.55);
+        const pinkMat = new THREE.MeshStandardMaterial({ color: 0xF28FBA, roughness: 0.76, metalness: 0 });
         const pinkMesh = new THREE.InstancedMesh(pinkGeo, pinkMat, pinkTrees.length);
         pinkMesh.castShadow = true;
         pinkMesh.receiveShadow = true;
@@ -200,8 +317,7 @@ export class StreetProps {
           dummy.scale.setScalar(t.scale);
           dummy.updateMatrix();
           pinkMesh.setMatrixAt(idx, dummy.matrix);
-          // 微调深浅粉紫，呈现自然花海层次
-          c.setHex(idx % 3 === 0 ? 0xF7A8CC : idx % 3 === 1 ? 0xE879AE : 0xF295C0);
+          c.setHex(idx % 3 === 0 ? 0xF9B0D2 : idx % 3 === 1 ? 0xEB7DB0 : 0xF398C3);
           pinkMesh.setColorAt(idx, c);
         });
         pinkMesh.instanceMatrix.needsUpdate = true;
@@ -209,12 +325,10 @@ export class StreetProps {
         this.group.add(pinkMesh);
       }
 
-      // 3. 亚热带绿荫树冠（1 Draw Call）
+      // 3. 亚热带饱满三簇绿荫树冠（1 Draw Call）
       if (greenTrees.length > 0) {
-        const greenGeo = new THREE.DodecahedronGeometry(1.68, 1);
-        greenGeo.scale(1.08, 0.88, 1.08);
-        greenGeo.translate(0, 3.6, 0);
-        const greenMat = new THREE.MeshStandardMaterial({ color: 0x4F9B58, roughness: 0.82, metalness: 0 });
+        const greenGeo = createLushCanopyGeometry(1.52);
+        const greenMat = new THREE.MeshStandardMaterial({ color: 0x4E9E56, roughness: 0.80, metalness: 0 });
         const greenMesh = new THREE.InstancedMesh(greenGeo, greenMat, greenTrees.length);
         greenMesh.castShadow = true;
         greenMesh.receiveShadow = true;
@@ -227,7 +341,7 @@ export class StreetProps {
           dummy.scale.setScalar(t.scale);
           dummy.updateMatrix();
           greenMesh.setMatrixAt(idx, dummy.matrix);
-          c.setHex(idx % 3 === 0 ? 0x58A85D : idx % 3 === 1 ? 0x458E4E : 0x67B365);
+          c.setHex(idx % 3 === 0 ? 0x56AA5B : idx % 3 === 1 ? 0x428D4B : 0x69B664);
           greenMesh.setColorAt(idx, c);
         });
         greenMesh.instanceMatrix.needsUpdate = true;
@@ -246,15 +360,15 @@ export class StreetProps {
     });
 
     if (lamps.length > 0) {
-      const poleGeo = new THREE.CylinderGeometry(0.06, 0.09, 5.4, 6);
-      poleGeo.translate(0, 2.7, 0);
+      const poleGeo = new THREE.CylinderGeometry(0.06, 0.09, 5.5, 6);
+      poleGeo.translate(0, 2.75, 0);
       const poleMat = new THREE.MeshStandardMaterial({ color: 0x3D4954, roughness: 0.6, metalness: 0.25 });
       const poleMesh = new THREE.InstancedMesh(poleGeo, poleMat, lamps.length);
       poleMesh.castShadow = true;
       poleMesh.name = 'street-lamp-poles';
 
-      const headGeo = new THREE.BoxGeometry(0.45, 0.14, 0.9);
-      headGeo.translate(0, 5.45, 0.35);
+      const headGeo = new THREE.BoxGeometry(0.45, 0.14, 0.92);
+      headGeo.translate(0, 5.52, 0.38);
       const headMesh = new THREE.InstancedMesh(headGeo, this.lampHeadMat, lamps.length);
       headMesh.name = 'street-lamp-heads';
 
@@ -270,6 +384,57 @@ export class StreetProps {
       headMesh.instanceMatrix.needsUpdate = true;
       this.group.add(poleMesh, headMesh);
     }
+
+    // 6. 蓝白机非隔离护栏（1 Draw Call）
+    if (rails.length > 0) {
+      const railGeo = createGuardrailGeometry();
+      const railMat = new THREE.MeshStandardMaterial({ color: 0xE6EEF4, roughness: 0.55, metalness: 0.25 });
+      const railMesh = new THREE.InstancedMesh(railGeo, railMat, rails.length);
+      railMesh.castShadow = true;
+      railMesh.receiveShadow = true;
+      railMesh.name = 'street-guardrails';
+
+      const c = new THREE.Color();
+      rails.forEach((r, idx) => {
+        dummy.position.set(r.x, 0, r.z);
+        dummy.rotation.set(0, r.yaw, 0);
+        dummy.scale.setScalar(1);
+        dummy.updateMatrix();
+        railMesh.setMatrixAt(idx, dummy.matrix);
+        // 交替浅白与交通蓝，还原广西街头护栏节奏
+        c.setHex(idx % 2 === 0 ? 0xECF3F8 : 0x3B7BC0);
+        railMesh.setColorAt(idx, c);
+      });
+      railMesh.instanceMatrix.needsUpdate = true;
+      if (railMesh.instanceColor) railMesh.instanceColor.needsUpdate = true;
+      this.group.add(railMesh);
+    }
+
+    // 7. 主干道路口斑马线（1 Draw Call）
+    if (crosswalks.length > 0) {
+      const cwGeo = createCrosswalkGeometry();
+      const cwMat = new THREE.MeshStandardMaterial({
+        color: 0xF2F5F7,
+        roughness: 0.85,
+        metalness: 0,
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -2,
+      });
+      const cwMesh = new THREE.InstancedMesh(cwGeo, cwMat, crosswalks.length);
+      cwMesh.receiveShadow = true;
+      cwMesh.name = 'street-crosswalks';
+
+      crosswalks.forEach((cw, idx) => {
+        dummy.position.set(cw.x, 0, cw.z);
+        dummy.rotation.set(0, cw.yaw, 0);
+        dummy.scale.set(cw.width / 7.0, 1, 1);
+        dummy.updateMatrix();
+        cwMesh.setMatrixAt(idx, dummy.matrix);
+      });
+      cwMesh.instanceMatrix.needsUpdate = true;
+      this.group.add(cwMesh);
+    }
   }
 
   public setAtmosphere(nightGlow: number, visible: boolean): void {
@@ -277,8 +442,13 @@ export class StreetProps {
     this.lampHeadMat.emissiveIntensity = 0.12 + nightGlow * 2.2;
   }
 
-  public getStats(): { trees: number; lamps: number } {
-    return { trees: this.treeCount, lamps: this.lampCount };
+  public getStats(): { trees: number; lamps: number; rails: number; crosswalks: number } {
+    return {
+      trees: this.treeCount,
+      lamps: this.lampCount,
+      rails: this.railCount,
+      crosswalks: this.crosswalkCount,
+    };
   }
 
   public dispose(): void {

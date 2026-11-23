@@ -1,0 +1,384 @@
+{
+  "source": "data/wuxing-street/map-wide.osm.gz + manifest-overture.json",
+  "license": "ODbL 1.0",
+  "attribution": "© OpenStreetMap contributors · Overture Maps Foundation",
+  "origin": {
+    "lon": 109.4086882,
+    "lat": 24.3157756,
+    "node": "6038500119"
+  },
+  "landmarks": [
+    {
+      "id": "node/2065206730",
+      "name": "柳州五星",
+      "kind": "sculpture",
+      "position": [
+        -55.83,
+        139.09
+      ],
+      "heightHint": 6.0
+    },
+    {
+      "id": "node/6053818044",
+      "name": "人民广场",
+      "kind": "plaza",
+      "position": [
+        -118.59,
+        -645.39
+      ],
+      "heightHint": 14.0
+    },
+    {
+      "id": "way/195918702",
+      "name": "文惠桥",
+      "kind": "bridge",
+      "position": [
+        493.66,
+        489.38
+      ],
+      "heightHint": 16.0
+    },
+    {
+      "id": "way/205515113",
+      "name": "柳州博物馆",
+      "kind": "building",
+      "position": [
+        -82.51,
+        -673.0
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205515114",
+      "name": "柳侯公园",
+      "kind": "park",
+      "position": [
+        240.44,
+        -578.05
+      ],
+      "heightHint": 18.0
+    },
+    {
+      "id": "way/205516002",
+      "name": "驾鹤小桃源",
+      "kind": "park",
+      "position": [
+        724.04,
+        837.21
+      ],
+      "heightHint": 18.0
+    },
+    {
+      "id": "way/205654183",
+      "name": "华侨大厦",
+      "kind": "building",
+      "position": [
+        -133.8,
+        -72.84
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205654194",
+      "name": "聚宝大厦",
+      "kind": "building",
+      "position": [
+        -182.0,
+        -65.38
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205654195",
+      "name": "东都大厦",
+      "kind": "building",
+      "position": [
+        -31.32,
+        96.03
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205654205",
+      "name": "工贸大厦",
+      "kind": "building",
+      "position": [
+        -155.53,
+        93.5
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205656857",
+      "name": "兴隆大厦",
+      "kind": "building",
+      "position": [
+        -100.66,
+        121.42
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205656859",
+      "name": "星河大厦",
+      "kind": "building",
+      "position": [
+        -161.17,
+        -139.27
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205657490",
+      "name": "新大地商贸城",
+      "kind": "building",
+      "position": [
+        -47.74,
+        -434.32
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205657496",
+      "name": "中交大厦",
+      "kind": "building",
+      "position": [
+        -30.72,
+        -390.91
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205657497",
+      "name": "金皇冠柏曼酒店",
+      "kind": "building",
+      "position": [
+        -131.74,
+        -280.86
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/205658301",
+      "name": "柳州文化艺术中心",
+      "kind": "building",
+      "position": [
+        -372.87,
+        -671.31
+      ],
+      "heightHint": 32.0
+    },
+    {
+      "id": "way/207879379",
+      "name": "谷埠街国际商城",
+      "kind": "cultural",
+      "position": [
+        -535.92,
+        985.08
+      ],
+      "heightHint": 20.0
+    },
+    {
+      "id": "way/370559017",
+      "name": "文昌桥",
+      "kind": "bridge",
+      "position": [
+        897.7,
+        -943.29
+      ],
+      "heightHint": 16.0
+    },
+    {
+      "id": "way/434067131",
+      "name": "银泰城",
+      "kind": "cultural",
+      "position": [
+        -246.92,
+        950.48
+      ],
+      "heightHint": 20.0
+    },
+    {
+      "id": "way/434067135",
+      "name": "柳州文庙",
+      "kind": "cultural",
+      "position": [
+        960.84,
+        457.17
+      ],
+      "heightHint": 20.0
+    },
+    {
+      "id": "way/598802730",
+      "name": "马鞍山公园",
+      "kind": "park",
+      "position": [
+        28.17,
+        1399.21
+      ],
+      "heightHint": 18.0
+    },
+    {
+      "id": "way/627315957",
+      "name": "红光大桥",
+      "kind": "bridge",
+      "position": [
+        -1178.3,
+        380.87
+      ],
+      "heightHint": 16.0
+    },
+    {
+      "id": "way/899710004",
+      "name": "地王国际财富中心",
+      "kind": "building",
+      "position": [
+        -167.41,
+        -842.27
+      ],
+      "heightHint": 311.0
+    },
+    {
+      "id": "way/1044328326",
+      "name": "柳州市体育场",
+      "kind": "cultural",
+      "position": [
+        -628.12,
+        -587.42
+      ],
+      "heightHint": 20.0
+    },
+    {
+      "id": "cd03e3de-a95d-4f91-b96e-8955f267a2cd",
+      "name": "地王公馆C号楼",
+      "kind": "building",
+      "position": [
+        -97.53,
+        -903.49
+      ],
+      "heightHint": 34.0
+    },
+    {
+      "id": "e185338e-7755-4cb1-a52a-96ccd4aeda44",
+      "name": "地王新天地",
+      "kind": "building",
+      "position": [
+        -311.22,
+        -858.92
+      ],
+      "heightHint": 34.0
+    },
+    {
+      "id": "12184d87-c477-4c11-aaf3-017a05f1fa1d",
+      "name": "地王公馆",
+      "kind": "building",
+      "position": [
+        -290.47,
+        -943.54
+      ],
+      "heightHint": 34.0
+    },
+    {
+      "id": "1de503d6-b8a6-41f4-add8-a4094404918c",
+      "name": "地王大厦",
+      "kind": "building",
+      "position": [
+        -69.11,
+        297.23
+      ],
+      "heightHint": 34.0
+    }
+  ],
+  "streetSigns": [
+    {
+      "id": "way/143833786",
+      "name": "滨江东路",
+      "position": [
+        56.97,
+        403.69
+      ],
+      "yaw": -1.681
+    },
+    {
+      "id": "way/195910349",
+      "name": "龙城路",
+      "position": [
+        -257.85,
+        367.94
+      ],
+      "yaw": -0.044
+    },
+    {
+      "id": "way/195910385",
+      "name": "五一路",
+      "position": [
+        -374.89,
+        -344.14
+      ],
+      "yaw": 1.409
+    },
+    {
+      "id": "way/196166774",
+      "name": "中山东路",
+      "position": [
+        48.15,
+        91.32
+      ],
+      "yaw": -1.24
+    },
+    {
+      "id": "way/196166794",
+      "name": "解放南路",
+      "position": [
+        -77.61,
+        26.95
+      ],
+      "yaw": -2.928
+    },
+    {
+      "id": "way/205513954",
+      "name": "培新路",
+      "position": [
+        37.49,
+        157.59
+      ],
+      "yaw": 0.058
+    },
+    {
+      "id": "way/205513960",
+      "name": "五星街",
+      "position": [
+        1.63,
+        8.78
+      ],
+      "yaw": 0.667
+    },
+    {
+      "id": "way/205513968",
+      "name": "中山西路",
+      "position": [
+        18.1,
+        103.27
+      ],
+      "yaw": -1.167
+    },
+    {
+      "id": "way/643314545",
+      "name": "广场路",
+      "position": [
+        -51.63,
+        -740.92
+      ],
+      "yaw": 1.716
+    },
+    {
+      "id": "way/1044328358",
+      "name": "曙光中路",
+      "position": [
+        37.64,
+        338.29
+      ],
+      "yaw": 1.675
+    }
+  ]
+}

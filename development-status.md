@@ -23,14 +23,15 @@
 - [x] Rapier 3D 物理碰撞（[PhysicsWorld.ts](src/PhysicsWorld.ts)：`@dimforge/rapier3d-compat` 地面静态碰撞体 + 2891 栋建筑精确多边形外墙/屋顶 Trimesh BVH + `KinematicCharacterController` 贴墙滑动与重力落地）
 - [x] **58/58** 自动化测试通过（Linux + Windows 双环境）+ `tsc --noEmit` + `vite build` + 浏览器实机复验通过（**180 FPS**、**Draw Calls 100** `< 200`、0 报错、桌面 1280×800 与移动端 375×667 零重叠）
 
-## Milestone 2+: 都市昼夜画风与柳州紫荆花街景升级（Phase A）✅（已实机验收通过）
+## Milestone 2+: 都市昼夜画风与柳州实景细节精细化（Phase A+）✅（已实机验收通过）
 
 - [x] 24H 动态天空穹顶、低模白云与太阳阴影跟随（[SkyAtmosphere.ts](src/SkyAtmosphere.ts)：`晴日 10:25` / `日落 17:55` / `夜景 21:30` / `数据检视 AUDIT` 一键切换）
-- [x] 双模式程序化建筑立面（[WuxingBuildings.ts](src/WuxingBuildings.ts)：都市窗格/层线/夜间随机暖灯，切「数据检视」瞬时还原洋红缺失斜纹）
-- [x] 道路沿线 UV 着色（[RoadNetwork.ts](src/RoadNetwork.ts)：主干道柏油白色虚线与路缘、五星街暖石砖铺装 + 黄色盲道条带）
-- [x] 柳州洋紫荆（粉花冠）与常绿行道树 + 夜间发光路灯（[StreetProps.ts](src/StreetProps.ts)：全 `InstancedMesh` 合批仅 5 Draw Calls）
-- [x] `C` 三视角切换（近/远第三人称 + 第一人称）、`R` 脱困、`H` 一键纯净录屏模式（抖音拍片专用）与磨砂玻璃 HUD（点击按钮不抢 `WASD` 焦点）
-- [x] **59/59** 自动化测试通过、`tsc --noEmit` & `vite build` 通过、浏览器实机 **179 FPS / Draw Calls 108 / 0 报错 / 桌面与 375×667 移动端 0 重叠**
+- [x] 多层城建天际线与精细立面（[WuxingBuildings.ts](src/WuxingBuildings.ts)：漫游模式按真实占地/业态/大厦名生成多层楼高 + 临街彩色底商雨棚橱窗 + 带框窗格 + 38m+ 玻璃幕墙 + 夜景暖灯；「数据检视」瞬切 3m 缺失占位与洋红斜纹）
+- [x] 真实柳州公园、体育场与商业广场（[LanduseLayer.ts](src/LanduseLayer.ts) + `landuse.json`：柳侯公园、马鞍山公园、蟠龙山公园、驾鹤小桃源、柳州市体育场、五星步行街广场等 56 块真实 OSM 面）
+- [x] 真实柳州路牌、雕塑与地标浮标（[LandmarksAndSigns.ts](src/LandmarksAndSigns.ts) + `landmarks.json`：「五星街」等 10 块中国蓝白路牌、「柳州五星」雕塑、地王国际财富中心/华侨大厦/工贸大厦/柳州博物馆/文惠桥/文昌桥/红光大桥等 28 处地标）
+- [x] 柳州街头高密度细节（[StreetProps.ts](src/StreetProps.ts)：三簇饱满粉花洋紫荆 + 绿荫行道树 + 发光路灯 + 蓝白机非隔离护栏 + 路口白色斑马线，全 `InstancedMesh` 仅 7 Draw Calls）
+- [x] `C` 三视角切换、`R` 脱困、`H` 抖音一键纯净录屏模式与磨砂玻璃 HUD
+- [x] **59/59** 自动化测试通过、`tsc --noEmit` & `vite build` 通过、浏览器实机 **178 FPS / Draw Calls 136**（鸟瞰 197，`< 200` 预算）/ 0 报错
 
 ## Milestone 3: 车辆系统 (下一步 — 可正式启动)
 - [ ] 电动自行车 / 小汽车载具模型与物理驾驶
