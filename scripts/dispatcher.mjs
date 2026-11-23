@@ -101,19 +101,25 @@ async function modifiedFiles(wtree) {
   const unknown = await git('-C', wtree, 'ls-files', '--others', '--exclude-standard', '-z');
   return [...new Set([changed, unknown].flatMap(x => x.split('\0').filter(Boolean)))];
 }
+let worktreeQueue = Promise.resolve();
 async function prepareWorktree(agent, id) {
-  mkdirSync(worktreeRoot, { recursive: true });
-  const branch = `agent/${agent}/issue-${id}`;
-  const dir = join(worktreeRoot, `${agent}-issue-${id}`);
-  if (existsSync(dir)) {
-    const actual = await git('-C', dir, 'branch', '--show-current');
-    if (actual !== branch) throw new Error(`Existing worktree branch mismatch at ${dir}: ${actual}`);
+  const run = async () => {
+    mkdirSync(worktreeRoot, { recursive: true });
+    const branch = `agent/${agent}/issue-${id}`;
+    const dir = join(worktreeRoot, `${agent}-issue-${id}`);
+    if (existsSync(dir)) {
+      const actual = await git('-C', dir, 'branch', '--show-current');
+      if (actual !== branch) throw new Error(`Existing worktree branch mismatch at ${dir}: ${actual}`);
+      return { branch, dir };
+    }
+    const localBranches = await git('branch', '--list', branch);
+    if (localBranches.trim()) await git('worktree', 'add', dir, branch);
+    else await git('worktree', 'add', '-b', branch, dir, 'origin/main');
     return { branch, dir };
-  }
-  const localBranches = await git('branch', '--list', branch);
-  if (localBranches.trim()) await git('worktree', 'add', dir, branch);
-  else await git('worktree', 'add', '-b', branch, dir, 'origin/main');
-  return { branch, dir };
+  };
+  const task = worktreeQueue.then(run, run);
+  worktreeQueue = task.catch(() => {});
+  return task;
 }
 async function publishDraft(repo, issue, agent, dir, branch, commit) {
   const expected = `agent/${agent}/issue-${issue.number}`;
