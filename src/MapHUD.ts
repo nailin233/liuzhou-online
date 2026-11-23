@@ -12,6 +12,8 @@ export interface HUDState {
   buildingsMissing: number;
   roadsTotal: number;
   dataSource?: string;  // 数据来源标签（如 'Overture 2891'）
+  mode?: 'walk' | 'overview';
+  colliders?: number;
 }
 
 export interface MapHUDOptions {
@@ -151,13 +153,19 @@ export class MapHUD {
     const missing = state.buildingsMissing > 0
       ? `<span style="color:#D9549B">缺失高度 ${state.buildingsMissing}/${state.buildingsTotal}</span>`
       : `建筑 ${state.buildingsTotal}`;
+    const modeTag = state.mode
+      ? `<span style="color:#8AD2C8">${state.mode === 'walk' ? '步行' : '鸟瞰'}</span> · `
+      : '';
+    const colTag = state.colliders && state.colliders > 0
+      ? ` · 碰撞 ${state.colliders}`
+      : '';
     const src = state.dataSource
       ? `<span class="map-hud-src"> ${state.dataSource}</span>`
       : '';
     this.statusEl.innerHTML =
-      `WebGL · ${state.fps} FPS · 调用 ${state.drawCalls} · ` +
+      `${modeTag}WebGL · ${state.fps} FPS · 调用 ${state.drawCalls} · ` +
       `三角形 ${(state.triangles / 1000).toFixed(0)}k · ` +
-      `${missing} · 道路 ${state.roadsTotal}${src} · <kbd>L</kbd>图例`;
+      `${missing} · 道路 ${state.roadsTotal}${colTag}${src} · <kbd>L</kbd>图例`;
   }
 
   public dispose(): void {

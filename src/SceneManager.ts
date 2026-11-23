@@ -22,6 +22,7 @@ export class SceneManager {
 
   private container: HTMLElement;
   private resizeObserver: ResizeObserver;
+  private onWindowResize: () => void;
   private animationId: number | null = null;
 
   constructor(options: SceneManagerOptions) {
@@ -52,7 +53,7 @@ export class SceneManager {
     this.camera = new THREE.PerspectiveCamera(
       55,
       this.container.clientWidth / Math.max(1, this.container.clientHeight),
-      1,
+      0.25,
       8000,
     );
     // 宽幅视角：默认位于原点南侧上方，首屏清晰可见五星街核心区与柳江
@@ -67,6 +68,8 @@ export class SceneManager {
     this.controls.update();
     this.controls.saveState();
 
+    this.onWindowResize = () => this.handleResize();
+    window.addEventListener('resize', this.onWindowResize);
     this.resizeObserver = new ResizeObserver(() => this.handleResize());
     this.resizeObserver.observe(this.container);
   }
@@ -104,6 +107,7 @@ export class SceneManager {
 
   public dispose(): void {
     this.stopRendering();
+    window.removeEventListener('resize', this.onWindowResize);
     this.resizeObserver.disconnect();
     this.controls.dispose();
     this.renderer.dispose();

@@ -27,6 +27,18 @@ export interface BuildingStats {
   source:    string;  // 数据来源标签
 }
 
+export interface BuildingColliderData {
+  id:            string;
+  outline_local: [number, number][];
+  modelHeight:   number;
+}
+
+export interface LoadBuildingsResult {
+  group:      THREE.Group;
+  stats:      BuildingStats;
+  footprints: BuildingColliderData[];
+}
+
 // ── 颜色 ──────────────────────────────────────────────────────────────────────
 const COLORS: Record<HeightSource, { side: number; top: number }> = {
   'osm.height': { side: 0xC9D2D6, top: 0xE4EBED },
@@ -182,7 +194,7 @@ interface WideManifest {
 
 async function loadProceduralManifest(
   base: URL, filename: string, label: string,
-): Promise<{ group: THREE.Group; stats: BuildingStats } | null> {
+): Promise<LoadBuildingsResult | null> {
   try {
     const r = await fetch(new URL(filename, base));
     if (!r.ok) {
@@ -194,7 +206,17 @@ async function loadProceduralManifest(
     const groups: Record<HeightSource, WideEntry[]> = {
       'osm.height': [], 'osm.levels': [], 'missing': [],
     };
-    for (const e of m.buildings) groups[e.heightSource]?.push(e);
+    const footprints: BuildingColliderData[] = [];
+    for (const e of m.buildings) {
+      groups[e.heightSource]?.push(e);
+      if (Array.isArray(e.outline_local) && e.outline_local.length >= 3 && e.modelHeight > 0) {
+        footprints.push({
+          id: e.id,
+          outline_local: e.outline_local,
+          modelHeight: e.modelHeight,
+        });
+      }
+    }
 
     // Three.js ExtrudeGeometry: group 0 = 顶/底盖 (top)，group 1 = 立面 (side)
     const materials: Record<HeightSource, THREE.MeshStandardMaterial[]> = {} as never;
@@ -251,7 +273,7 @@ async function loadProceduralManifest(
       else stats.missing = entries.length;
     }
 
-    return { group: rootGroup, stats };
+    return { group: rootGroup, stats, footprints };
   } catch (err) {
     console.error(`[WuxingBuildings] 加载 ${filename} 失败:`, err);
     return null;
@@ -259,7 +281,7 @@ async function loadProceduralManifest(
 }
 
 // ── 主入口 ───────────────────────────────────────────────────────────────────
-export async function loadWuxingBuildings(): Promise<{ group: THREE.Group; stats: BuildingStats }> {
+export async function loadWuxingBuildings(): Promise<LoadBuildingsResult> {
   const base = new URL(import.meta.env.BASE_URL + 'models/wuxing-street/', document.baseURI);
 
   // 1. Overture (2891 栋)
@@ -276,7 +298,7 @@ export async function loadWuxingBuildings(): Promise<{ group: THREE.Group; stats
 
 // ── GLB fallback ──────────────────────────────────────────────────────────────
 interface GlbEntry { file: string; position: [number,number,number]; heightSource: HeightSource }
-async function loadGlbFallback(base: URL): Promise<{ group: THREE.Group; stats: BuildingStats }> {
+async function loadGlbFallback(base: URL): Promise<LoadBuildingsResult> {
   const response = await fetch(new URL('manifest.json', base));
   if (!response.ok) throw new Error(`manifest.json HTTP ${response.status}`);
   const { buildings }: { buildings: GlbEntry[] } = await response.json();
@@ -284,10 +306,25 @@ async function loadGlbFallback(base: URL): Promise<{ group: THREE.Group; stats: 
   const group  = new THREE.Group();
   const shared = new Map<string, THREE.Material>();
   const stats: BuildingStats = { total: 0, hasHeight: 0, hasLevels: 0, missing: 0, source: 'GLB 34' };
+  const footprints: BuildingColliderData[] = [];
   await Promise.all(buildings.map(async e => {
     const { scene } = await loader.loadAsync(new URL(e.file, base).href);
     group.add(scene);
     scene.position.fromArray(e.position);
+    scene.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(scene);
+    if (!box.isEmpty()) {
+      footprints.push({
+        id: e.file,
+        outline_local: [
+          [box.min.x, box.min.z],
+          [box.max.x, box.min.z],
+          [box.max.x, box.max.z],
+          [box.min.x, box.max.z],
+        ],
+        modelHeight: Math.max(box.max.y, 3),
+      });
+    }
     scene.traverse(child => {
       if (!(child instanceof THREE.Mesh)) return;
       const mat = child.material as THREE.MeshStandardMaterial;
@@ -300,5 +337,5 @@ async function loadGlbFallback(base: URL): Promise<{ group: THREE.Group; stats: 
     else if (e.heightSource === 'osm.levels') stats.hasLevels++;
     else stats.missing++;
   }));
-  return { group, stats };
+  return { group, stats, footprints };
 }

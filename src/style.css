@@ -2,15 +2,40 @@
 * { box-sizing:border-box } body { margin:0; min-height:100vh }
 .viewport { position:fixed; inset:0; overflow:hidden }
 .viewport canvas { display:block; width:100%; height:100% }
-#reset-view { pointer-events:auto; padding:8px 14px; min-height:34px; border:1px solid #86b9b8; border-radius:4px; background:#17232c; color:#edf4f5; font:inherit; cursor:pointer; margin-top:10px }
-#reset-view:focus-visible { outline:3px solid #8ad2c8; outline-offset:3px }
+.panel-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; pointer-events:auto }
+.action-btn {
+  pointer-events:auto; padding:7px 12px; min-height:34px;
+  border:1px solid #86b9b8; border-radius:4px;
+  background:rgba(23,35,44,.9); color:#edf4f5; font:inherit; font-size:12px;
+  cursor:pointer; transition:border-color .15s, background .15s;
+}
+.action-btn:hover { background:#203442; border-color:#8ad2c8 }
+.action-btn:focus-visible { outline:3px solid #8ad2c8; outline-offset:2px }
+.action-btn.primary { border-color:#5ce1ce; color:#5ce1ce }
+
+.palette-bar {
+  display:flex; align-items:center; gap:6px; margin-top:10px;
+  pointer-events:auto;
+}
+.palette-label { font-size:11px; color:#8ba4b1; letter-spacing:.08em; margin-right:2px }
+.palette-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 9px; min-height:28px;
+  border:1px solid #ffffff26; border-radius:999px;
+  background:rgba(16,24,32,.84); color:#afc4cb;
+  font:inherit; font-size:11px; cursor:pointer;
+}
+.palette-btn:hover { border-color:#8ad2c8; color:#edf4f5 }
+.palette-btn.active { border-color:#8ad2c8; color:#edf4f5; background:#1e3440; box-shadow:0 0 0 1px #8ad2c8 inset }
+.palette-dot { width:9px; height:9px; border-radius:50%; display:inline-block; border:1px solid #ffffff44 }
+
 .header { position:fixed; z-index:5; top:0; left:0; right:0; height:64px; padding:0 32px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #ffffff16; background:rgba(16,24,32,.65); backdrop-filter:blur(6px); pointer-events:none }
 .mark { font-size:18px; letter-spacing:.16em; font-weight:800 } .dot { color:#8ad2c8 } .version { color:#8ba4b1; font-size:11px; letter-spacing:.2em }
-.panel { position:fixed; z-index:5; top:84px; left:32px; max-width:330px; pointer-events:none }
+.panel { position:fixed; z-index:5; top:84px; left:32px; max-width:340px; pointer-events:none }
 .eyebrow { color:#86b9b8; font-size:11px; letter-spacing:.26em; font-weight:700 }
-h1 { margin:10px 0; font-size:44px; line-height:1.18; font-weight:600; letter-spacing:.07em }
-.panel p { margin:8px 0; color:#afc4cb; line-height:1.7; font-size:13px } .panel strong { color:#e2efef }
-.hint { margin-top:14px !important; color:#7795a0 !important }
+h1 { margin:10px 0; font-size:42px; line-height:1.18; font-weight:600; letter-spacing:.07em }
+.panel p { margin:8px 0; color:#afc4cb; line-height:1.65; font-size:13px } .panel strong { color:#e2efef }
+.hint { margin-top:10px !important; color:#7795a0 !important; font-size:12px !important }
 kbd { display:inline-block; padding:1px 5px; border:1px solid #3e5a66; border-radius:3px; font-size:11px; color:#8ad2c8; background:#17232c }
 
 /* ── HUD / 指北针 / 图例 / 署名 ── */
@@ -60,14 +85,17 @@ kbd { display:inline-block; padding:1px 5px; border:1px solid #3e5a66; border-ra
 
 /* ── 移动端（≤650px）零重叠纵向布局（art-direction.md V6）── */
 @media (max-width:650px) {
-  .header { height:52px; padding:0 14px }
+  .header { height:50px; padding:0 14px }
   .mark { font-size:16px }
-  .panel { top:64px; left:14px; max-width:calc(100vw - 84px) }
-  h1 { margin:6px 0; font-size:28px }
-  .panel p { margin:4px 0; font-size:12px; line-height:1.5 }
+  .panel { top:60px; left:12px; max-width:calc(100vw - 76px) }
+  h1 { margin:4px 0; font-size:26px }
+  .panel p { margin:3px 0; font-size:11px; line-height:1.45 }
   .hint { display:none }
-  #reset-view { margin-top:6px; padding:6px 12px; font-size:12px }
-  .map-compass { top:64px; right:14px; width:44px; height:44px }
+  .panel-actions { margin-top:6px; gap:6px }
+  .action-btn { padding:5px 9px; min-height:30px; font-size:11px }
+  .palette-bar { margin-top:6px; gap:4px }
+  .palette-btn { padding:3px 7px; min-height:24px; font-size:10px }
+  .map-compass { top:60px; right:12px; width:44px; height:44px }
   .map-compass svg { width:44px; height:44px }
   .map-attribution {
     bottom:8px; left:10px; right:10px;

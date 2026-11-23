@@ -1,6 +1,34 @@
 # 测试与验收结果记录
 
-## 最新全面复验结果（2026-11-23，M1 冲刺收口后）
+## 最新全面复验结果（2026-11-23，Milestone 2 角色系统收口）
+
+### 总体结论：**Milestone 2 验收通过（PASSED，可放行进入 Milestone 3）**
+
+### 1. M2 工程与自动化测试（58/58 全部通过）
+
+| 检查项 | 结果 | 详情 |
+|---|---|---|
+| `tests/m2-character-physics.test.mjs` | ✅ 3/3 通过 | 覆盖 `AnimeCharacter` 身高与 3 套配色/动画、`PhysicsWorld` Rapier 地面与墙体阻挡及 2891 栋 Trimesh BVH、`PlayerController` WASD/跳跃弧线/模式切换 |
+| `tests/m1-geometry-and-coord.test.mjs` | ✅ 4/4 通过 | 坐标转换、非索引建筑合批与 Z 轴朝向、400 条道路合批、水体法线与朝向 |
+| `tests/dsh-integration.test.mjs` + `project` + `viewport` + `wuxing-buildings` | ✅ 51/51 通过 | 全量 M0/M1 回归无退化 |
+| `tsc --noEmit` / `vite build` | ✅ 通过 | 0 编译错误；构建产物 `index-DltjyNAo.js`（含 `@dimforge/rapier3d-compat` WASM） |
+
+### 2. M2 浏览器实机验收（`http://127.0.0.1:4192`，`index-DltjyNAo.js`）
+
+| 验收项 | 实机实测结果 | 状态 |
+|---|---|---|
+| 控制台报错与网络请求 | 0 报错；6 个请求全 200（`index-DltjyNAo.js`、`manifest-overture.json`、`roads.json`、`waterways.json`） | ✅ 通过 |
+| 默认落地步行模式 | 默认直接站立于五星街中心，动漫风格角色（赛璐璐夹克、围巾、背包、马尾、墨线轮廓、脚底光环）与周边街区清晰可见 | ✅ 通过 |
+| 3 套实时配色切换 | 点击 `暖橙` / `亮白` / `青绿` 实时切换角色服装、发色/发饰与光环，按钮高亮状态同步 | ✅ 通过 |
+| WASD + Space 跳跃 + 相机跟随 | 按住 `W` 沿五星街前进且镜头平滑跟随；按 `Space` 做出空中跳跃姿态并稳健落地不穿地 | ✅ 通过 |
+| Rapier 2891 栋建筑碰撞 | HUD 实显 `碰撞 2891`，单测与实机确认角色无法穿墙 | ✅ 通过 |
+| 步行 ↔ 鸟瞰切换 (`V` / 按钮) | 点击 `#toggle-mode` 切至 `鸟瞰`（可见全城与柳江），按 `V` 返回 `步行`，`#reset-view` 干净复位 | ✅ 通过 |
+| 性能表现 | **180 FPS**，**Draw Calls 100**（鸟瞰 104，均低于 `< 200` 预算），三角形 `53k` | ✅ 通过 |
+| 移动端 375×667（含展开图例） | 6 个 UI 组件 **0 重叠**，动漫角色居中清晰可见 | ✅ 通过 |
+
+---
+
+## 历史记录：Milestone 1 复验结果（2026-11-23）
 
 ### 总体结论：**Milestone 1 验收通过（PASSED，可放行进入 Milestone 2）**
 
