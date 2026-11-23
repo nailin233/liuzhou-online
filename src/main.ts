@@ -7,6 +7,7 @@ import { loadRoadNetwork, disposeRoads, type RoadStyleController } from './RoadN
 import { loadWaterNetwork, disposeWater, type WaterStyleController } from './WaterNetwork';
 import { loadLanduseLayer, disposeLanduse, type LanduseStyleController } from './LanduseLayer';
 import { loadLandmarksAndSigns, disposeLandmarks, type LandmarksController } from './LandmarksAndSigns';
+import { WuxingHeroDistrict, WUXING_HERO_SPAWN, HERO_BUILDING_IDS } from './WuxingHeroDistrict';
 import { createMapGround } from './MapGround';
 import { StreetProps } from './StreetProps';
 import { MapHUD } from './MapHUD';
@@ -72,6 +73,9 @@ scene.add(groundRes.group);
 const character = new AnimeCharacter('teal');
 scene.add(character.root);
 
+const heroDistrict = new WuxingHeroDistrict();
+scene.add(heroDistrict.group);
+
 let player: PlayerController | null = null;
 let physics: PhysicsWorld | null = null;
 let streetProps: StreetProps | null = null;
@@ -108,6 +112,7 @@ function applyAtmosphere(id: AtmospherePresetId): void {
   waterStyle?.setPreset(id);
   landuseStyle?.setPreset(id);
   streetProps?.setAtmosphere(preset.nightGlow, !isAudit);
+  heroDistrict.setAtmosphere(preset.nightGlow, !isAudit);
   landmarksCtrl?.setVisible(!isAudit, !cleanMode);
 
   for (const b of atmoBtns) {
@@ -208,7 +213,7 @@ let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0, _dataSource = '';
 
 (async () => {
   try {
-    const pw = await PhysicsWorld.create({ x: 0, y: 0, z: 0 });
+    const pw = await PhysicsWorld.create(WUXING_HERO_SPAWN);
     if (disposed) {
       pw.dispose();
       return;
@@ -219,14 +224,15 @@ let buildingsTotal = 0, buildingsMissing = 0, roadsTotal = 0, _dataSource = '';
       physics: pw,
       camera: scene.camera,
       controls: scene.controls,
-      spawn: { x: 0, y: 0, z: 0 },
+      spawn: WUXING_HERO_SPAWN,
+      initialYaw: 0, // 面朝正南：正对 5.88m 柳州五星雕塑 + 五星商业大厦 + 柳州购书中心 + 远景喀斯特峰林
       initialMode: 'walk',
       onModeChange: updateModeButton,
     });
     updateModeButton(player.getMode());
 
     const [buildResult, roadResult, waterResult, landuseResult, landmarksResult] = await Promise.all([
-      loadWuxingBuildings(),
+      loadWuxingBuildings(HERO_BUILDING_IDS),
       loadRoadNetwork(),
       loadWaterNetwork(),
       loadLanduseLayer(),
@@ -317,6 +323,7 @@ if (import.meta.hot) {
     player?.dispose();
     physics?.dispose();
     character.dispose();
+    heroDistrict.dispose();
     streetProps?.dispose();
     atmosphere.dispose();
     if (buildingGroup)  disposeBuildings(buildingGroup);

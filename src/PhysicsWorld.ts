@@ -102,6 +102,11 @@ export class PhysicsWorld {
       .setTranslation(0, -0.5, 0);
     this.world.createCollider(groundDesc);
 
+    // 五星雕塑 8m 圆形石座静态碰撞体（防止人物穿进雕塑基座）
+    const starBaseDesc = RAPIER.ColliderDesc.cylinder(3.0, 4.05)
+      .setTranslation(-55.83, 3.0, 139.09);
+    this.world.createCollider(starBaseDesc);
+
     // 角色运动学刚体 + 胶囊碰撞体
     const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
       .setTranslation(spawnX, spawnY + PLAYER_CENTER_OFFSET_Y, spawnZ);

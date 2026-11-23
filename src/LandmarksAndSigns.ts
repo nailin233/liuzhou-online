@@ -231,13 +231,10 @@ export async function loadLandmarksAndSigns(): Promise<LoadLandmarksResult> {
     propsGroup.add(signGroup);
   }
 
-  // 2. 「柳州五星」实体雕塑 + 核心地标浮标
+  // 2. 核心地标浮标（五星雕塑实体已由 WuxingHeroDistrict 精建）
   const badgeSprites: { sprite: THREE.Sprite; baseY: number; priority: boolean }[] = [];
 
   for (const lm of manifest.landmarks) {
-    if (lm.kind === 'sculpture') {
-      propsGroup.add(createWuxingSculpture(lm.position[0], lm.position[1]));
-    }
     if (!FEATURED_BADGES.has(lm.name)) continue;
 
     const accent = lm.kind === 'park' ? '#6EE084'

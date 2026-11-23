@@ -385,12 +385,14 @@ function buildBatchedLayer(
   materialsByHs: Record<HeightSource, [THREE.MeshStandardMaterial, THREE.MeshStandardMaterial]>,
   heightFn: (e: WideEntry) => number,
   layerName: string,
+  excludeIds?: Set<string>,
 ): THREE.Group {
   const layer = new THREE.Group();
   layer.name = layerName;
 
   for (const hs of ['osm.height', 'osm.levels', 'missing'] as HeightSource[]) {
-    const entries = entriesByHs[hs];
+    const rawEntries = entriesByHs[hs];
+    const entries = excludeIds ? rawEntries.filter(e => !excludeIds.has(e.id)) : rawEntries;
     if (entries.length === 0) continue;
 
     if (hs === 'missing' && entries.length > 50) {
@@ -427,7 +429,7 @@ function buildBatchedLayer(
 }
 
 async function loadProceduralManifest(
-  base: URL, filename: string, label: string,
+  base: URL, filename: string, label: string, excludeCityIds?: Set<string>,
 ): Promise<LoadBuildingsResult | null> {
   try {
     const r = await fetch(new URL(filename, base));
@@ -468,7 +470,7 @@ async function loadProceduralManifest(
       auditMats[hs] = [aTop, aSide];
     }
 
-    const cityLayer  = buildBatchedLayer(groups, cityMats, e => computeStylizedCityHeight(e), 'buildings-city');
+    const cityLayer  = buildBatchedLayer(groups, cityMats, e => computeStylizedCityHeight(e), 'buildings-city', excludeCityIds);
     const auditLayer = buildBatchedLayer(groups, auditMats, e => e.modelHeight, 'buildings-audit');
     auditLayer.visible = false;
 
@@ -501,13 +503,13 @@ async function loadProceduralManifest(
   }
 }
 
-export async function loadWuxingBuildings(): Promise<LoadBuildingsResult> {
+export async function loadWuxingBuildings(excludeCityIds?: Set<string>): Promise<LoadBuildingsResult> {
   const base = new URL(import.meta.env.BASE_URL + 'models/wuxing-street/', document.baseURI);
 
-  const overture = await loadProceduralManifest(base, 'manifest-overture.json', 'Overture 2891');
+  const overture = await loadProceduralManifest(base, 'manifest-overture.json', 'Overture 2891', excludeCityIds);
   if (overture) return overture;
 
-  const wide = await loadProceduralManifest(base, 'manifest-wide.json', 'OSM 240');
+  const wide = await loadProceduralManifest(base, 'manifest-wide.json', 'OSM 240', excludeCityIds);
   if (wide) return wide;
 
   return loadGlbFallback(base);

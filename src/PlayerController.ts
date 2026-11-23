@@ -29,7 +29,7 @@ export const WALK_SPEED = 5.0;      // m/s
 export const SPRINT_SPEED = 9.5;    // m/s
 export const JUMP_VELOCITY = 8.2;   // m/s
 export const GRAVITY = -20.0;       // m/s²
-const TARGET_EYE_HEIGHT = 1.35;     // 相机注视角色肩颈高度 (m)
+const TARGET_EYE_HEIGHT = 2.05;     // 相机注视高度 (m)，让首屏完整框入角色、5.88m 雕塑与高层商厦天际线
 
 export interface PlayerControllerOptions {
   character:    AnimeCharacter;
@@ -37,6 +37,7 @@ export interface PlayerControllerOptions {
   camera:       THREE.PerspectiveCamera;
   controls:     OrbitControls;
   spawn?:       { x: number; y: number; z: number };
+  initialYaw?:  number;
   initialMode?: CameraMode;
   onModeChange?: (mode: CameraMode) => void;
   bindKeyboard?: boolean;
@@ -54,13 +55,14 @@ export class PlayerController {
   private readonly camera: THREE.PerspectiveCamera;
   private readonly controls: OrbitControls;
   private readonly spawn: { x: number; y: number; z: number };
+  private readonly initialYaw: number;
   private readonly onModeChange?: (mode: CameraMode) => void;
 
   private mode: CameraMode = 'walk';
   private walkPreset: WalkCameraPreset = 'close';
   private verticalVel = 0;
   private grounded = true;
-  private currentYaw = Math.PI; // 初始朝向正北 (-Z)
+  private currentYaw = Math.PI; // 默认朝向正北 (-Z)，可按 initialYaw 覆盖
   private lastHorizSpeed = 0;
   private lastCollidedWall = false;
 
@@ -91,6 +93,8 @@ export class PlayerController {
     this.camera = options.camera;
     this.controls = options.controls;
     this.spawn = options.spawn ?? { x: 0, y: 0, z: 0 };
+    this.initialYaw = options.initialYaw ?? Math.PI;
+    this.currentYaw = this.initialYaw;
     this.onModeChange = options.onModeChange;
 
     this.character.root.position.set(this.spawn.x, this.spawn.y, this.spawn.z);
@@ -191,8 +195,8 @@ export class PlayerController {
       this.camera.position.set(pos.x, pos.y + 1.58, pos.z);
     } else {
       this.character.root.visible = true;
-      const dist = this.walkPreset === 'wide' ? 8.2 : 5.0;
-      const height = this.walkPreset === 'wide' ? 4.2 : 2.75;
+      const dist = this.walkPreset === 'wide' ? 9.0 : 5.8;
+      const height = this.walkPreset === 'wide' ? 3.8 : 2.35;
       this.controls.minDistance = 2.6;
       this.controls.maxDistance = 18;
       this.controls.target.set(pos.x, pos.y + TARGET_EYE_HEIGHT, pos.z);
@@ -253,7 +257,7 @@ export class PlayerController {
   public reset(): void {
     this.verticalVel = 0;
     this.grounded = true;
-    this.currentYaw = Math.PI;
+    this.currentYaw = this.initialYaw;
     this.physics.teleport(this.spawn.x, this.spawn.y, this.spawn.z);
     this.character.root.position.set(this.spawn.x, this.spawn.y, this.spawn.z);
     this.character.root.rotation.y = this.currentYaw;

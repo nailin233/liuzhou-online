@@ -243,7 +243,9 @@ export class StreetProps {
             const tx = px + nx * offsetDist * side;
             const tz = pz + nz * offsetDist * side;
             if (Math.abs(tx) > MAX_RANGE || Math.abs(tz) > MAX_RANGE) continue;
+            // 避开原点与五星雕塑核心广场（核心广场由 WuxingHeroDistrict 布置修长棕榈与多球路灯）
             if (Math.hypot(tx, tz) < 5.5) continue;
+            if (Math.hypot(tx + 55.83, tz - 139.09) < 30.0) continue;
 
             const cellKey = `${Math.round(tx / 6.5)},${Math.round(tz / 6.5)}`;
             if (occupied.has(cellKey)) continue;
